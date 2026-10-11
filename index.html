@@ -3,646 +3,613 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CipherLab · Encode & Decode</title>
+<title>CipherLab · Cryptographic & Encoding Suite</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    --bg:          #0a0f0a;
-    --bg-2:        #0d130e;
-    --panel:       #0f1510;
-    --panel-2:     #121a13;
-    --border:      #1e3a22;
-    --border-hi:   #2a5c34;
-    --border-focus:#3f8a4d;
+    --bg:          #080d08;
+    --bg-alt:      #0c140d;
+    --panel:       #0f1710;
+    --panel-header:#131f14;
+    --border:      #1d3b21;
+    --border-hi:   #2e5e34;
+    --border-focus:#4ade80;
     --green:       #4ade80;
     --green-dim:   #22c55e;
-    --green-dark:  #166534;
-    --green-glow:  rgba(74, 222, 128, 0.35);
-    --text:        #c8e6c9;
-    --text-dim:    #6b8f6e;
-    --text-mute:   #3a5440;
+    --green-dark:  #14532d;
+    --green-glow:  rgba(74, 222, 128, 0.25);
+    --text:        #dcfce7;
+    --text-dim:    #86efac;
+    --text-mute:   #4b7252;
     --amber:       #fbbf24;
-    --red:         #ef4444;
+    --red:         #f87171;
+    --blue:        #60a5fa;
   }
-  html, body { height: 100%; }
+
+  html, body { min-height: 100%; }
   body {
-    background: radial-gradient(ellipse at top, #0d1a10 0%, #0a0f0a 55%, #050805 100%);
+    background: radial-gradient(ellipse at top, #0f2012 0%, #080d08 60%, #040604 100%);
     background-attachment: fixed;
     color: var(--text);
-    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', ui-monospace, monospace;
-    font-size: 14px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, ui-monospace, monospace;
+    font-size: 13.5px;
     line-height: 1.5;
-    min-height: 100vh;
-    padding: 1.25rem;
+    padding: 1rem;
   }
+
   body::before {
     content: "";
     position: fixed; inset: 0;
     background: repeating-linear-gradient(
       0deg,
-      rgba(74,222,128,0.02) 0px, rgba(74,222,128,0.02) 1px,
+      rgba(74,222,128,0.015) 0px, rgba(74,222,128,0.015) 1px,
       transparent 1px, transparent 3px
     );
-    pointer-events: none; z-index: 1;
+    pointer-events: none; z-index: 1000;
   }
 
   .app {
-    max-width: 1500px;
+    max-width: 1560px;
     margin: 0 auto;
-    position: relative; z-index: 2;
-    display: flex; flex-direction: column;
-    gap: 0.9rem;
-    min-height: calc(100vh - 2.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
   }
 
-  /* ══════════ HEADER ══════════ */
+  /* ══════════ HEADER & NAVIGATION ══════════ */
   header {
     display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 0.75rem;
-    padding: 0.35rem 0.25rem 0.85rem;
-    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; gap: 1rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
   }
-  h1 {
-    font-size: 1.3rem; font-weight: 700;
-    color: var(--green);
-    letter-spacing: 0.03em;
-    display: flex; align-items: center; gap: 0.55rem;
-    text-shadow: 0 0 10px var(--green-glow);
+  .brand {
+    display: flex; align-items: center; gap: 0.75rem;
   }
-  h1 .prompt { color: var(--text-mute); font-weight: 400; }
-  .subtitle {
-    color: var(--text-dim);
-    font-size: 0.78rem;
-    letter-spacing: 0.03em;
+  .brand h1 {
+    font-size: 1.25rem; font-weight: 700; color: var(--green);
+    letter-spacing: 0.05em; text-shadow: 0 0 10px var(--green-glow);
+    display: flex; align-items: center; gap: 0.4rem;
   }
-  .subtitle .accent { color: var(--green-dim); }
+  .brand .tag {
+    font-size: 0.68rem; padding: 0.15rem 0.45rem;
+    background: var(--green-dark); color: var(--text);
+    border-radius: 3px; font-weight: 600; text-transform: uppercase;
+  }
+  .app-tabs {
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+  }
+  .tab-btn {
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text-dim); padding: 0.4rem 0.85rem;
+    border-radius: 4px; font-size: 0.76rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .tab-btn:hover { border-color: var(--border-hi); color: var(--green); }
+  .tab-btn.active {
+    background: rgba(74,222,128,0.12); border-color: var(--green);
+    color: var(--green); box-shadow: 0 0 8px var(--green-glow);
+  }
 
-  /* ══════════ MAIN GRID ══════════ */
-  .main-grid {
+  /* ══════════ VIEW 1: WORKSPACE ══════════ */
+  .workspace-view { display: flex; flex-direction: column; gap: 0.85rem; }
+  .workspace-view.hidden { display: none; }
+
+  .grid-io {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0.9rem;
-    flex: 1;
-    min-height: 340px;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
   }
-  @media (max-width: 900px) {
-    .main-grid { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 940px) { .grid-io { grid-template-columns: 1fr; } }
 
   .panel {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 5px;
+    border-radius: 6px;
     display: flex; flex-direction: column;
     overflow: hidden;
-    transition: border-color 0.15s;
   }
-  .panel:focus-within { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(74,222,128,0.06); }
+  .panel:focus-within { border-color: var(--border-hi); box-shadow: 0 0 0 2px var(--green-glow); }
 
   .panel-header {
     display: flex; align-items: center; justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.5rem 0.85rem;
-    background: var(--panel-2);
+    padding: 0.45rem 0.85rem;
+    background: var(--panel-header);
     border-bottom: 1px solid var(--border);
-    font-size: 0.72rem;
-    color: var(--green-dim);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 700;
+    font-size: 0.72rem; color: var(--green);
+    font-weight: 700; letter-spacing: 0.08em;
   }
-  .panel-header .meta {
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    text-transform: none;
-    letter-spacing: 0.02em;
-    font-weight: 400;
+  .panel-meta {
+    font-size: 0.7rem; color: var(--text-dim);
+    font-weight: normal; letter-spacing: 0;
   }
 
-  .panel-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .dropzone {
+    position: relative;
+    display: flex; flex-direction: column; flex: 1;
+  }
+  .dropzone.dragover { outline: 2px dashed var(--green); background: rgba(74,222,128,0.03); }
+
   textarea {
-    flex: 1; width: 100%;
-    background: transparent;
-    border: none; outline: none; resize: none;
-    color: var(--text);
-    font-family: inherit;
-    font-size: 0.92rem;
-    line-height: 1.55;
-    padding: 0.9rem 1rem;
+    width: 100%; height: 260px;
+    background: transparent; border: none; outline: none; resize: vertical;
+    color: var(--text); font-family: inherit; font-size: 0.92rem;
+    line-height: 1.5; padding: 0.85rem 1rem;
     caret-color: var(--green);
-    min-height: 200px;
-    word-break: break-all;
+    overflow-wrap: break-word; word-break: break-word;
   }
   textarea::placeholder { color: var(--text-mute); }
   #outputText {
     color: var(--green);
-    background: rgba(74, 222, 128, 0.02);
-    font-weight: 500;
-    text-shadow: 0 0 4px rgba(74, 222, 128, 0.18);
+    background: rgba(74, 222, 128, 0.015);
   }
-  #outputText.error { color: var(--red); text-shadow: none; background: rgba(239,68,68,0.03); }
+  #outputText.error { color: var(--red); background: rgba(248,113,113,0.03); }
 
   .panel-footer {
-    display: flex; gap: 0.35rem;
-    padding: 0.45rem 0.6rem;
-    background: var(--panel-2);
-    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.5rem; padding: 0.45rem 0.75rem;
+    background: var(--panel-header); border-top: 1px solid var(--border);
     flex-wrap: wrap;
   }
+  .btn-group { display: flex; gap: 0.35rem; flex-wrap: wrap; }
 
-  /* ══════════ BUTTONS ══════════ */
   button {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    font-family: inherit;
-    font-size: 0.74rem;
-    padding: 0.32rem 0.68rem;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.1s;
-    letter-spacing: 0.03em;
-    display: inline-flex; align-items: center; gap: 0.3rem;
-    user-select: none;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text-dim); font-family: inherit; font-size: 0.73rem;
+    padding: 0.32rem 0.65rem; border-radius: 3px; cursor: pointer;
+    transition: all 0.12s; display: inline-flex; align-items: center; gap: 0.35rem;
   }
-  button:hover {
-    color: var(--green);
-    border-color: var(--border-hi);
-    background: rgba(74, 222, 128, 0.05);
-  }
+  button:hover { color: var(--green); border-color: var(--border-hi); background: rgba(74,222,128,0.06); }
   button:active { transform: translateY(1px); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* ══════════ CONTROLS ══════════ */
-  .controls {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr);
-    gap: 0.75rem;
-    align-items: end;
+  .control-deck {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
   }
-  @media (max-width: 900px) {
-    .controls { grid-template-columns: 1fr 1fr; }
-    .controls .field--wide { grid-column: 1 / -1; }
+  .control-row {
+    display: grid;
+    grid-template-columns: auto minmax(280px, 1.4fr) minmax(240px, 1.6fr);
+    gap: 0.85rem; align-items: end;
   }
-  @media (max-width: 560px) {
-    .controls { grid-template-columns: 1fr; }
+  @media (max-width: 980px) {
+    .control-row { grid-template-columns: 1fr 1fr; }
+    .control-row .field-wide { grid-column: 1 / -1; }
   }
+  @media (max-width: 600px) { .control-row { grid-template-columns: 1fr; } }
 
-  .field {
-    display: flex; flex-direction: column; gap: 0.3rem;
-    min-width: 0;
-  }
+  .field { display: flex; flex-direction: column; gap: 0.35rem; }
   .field label {
-    font-size: 0.68rem;
-    color: var(--green-dim);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    font-weight: 700;
+    font-size: 0.68rem; color: var(--green-dim); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
   }
   .field select, .field input {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 0.85rem;
-    padding: 0.5rem 0.7rem;
-    border-radius: 3px;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    width: 100%;
-    cursor: pointer;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: inherit; font-size: 0.84rem;
+    padding: 0.48rem 0.65rem; border-radius: 4px; outline: none;
+    transition: border-color 0.15s; width: 100%;
   }
   .field select:focus, .field input:focus {
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.12);
+    border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--green-glow);
   }
-  .field select option, .field select optgroup {
-    background: #0a0f0a;
-    color: var(--text);
-  }
-  .field select optgroup {
-    color: var(--green-dim);
-    font-style: normal;
-    font-weight: 700;
-    padding: 0.3rem 0;
-  }
+  .field select optgroup { background: #0a110a; color: var(--green); font-weight: 700; }
+  .field select option { background: #0a110a; color: var(--text); }
 
-  .direction-toggle {
-    display: flex;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-    height: 34px;
+  .dir-switch {
+    display: flex; height: 34px; border: 1px solid var(--border);
+    border-radius: 4px; overflow: hidden;
   }
-  .direction-toggle button {
-    border: none; border-radius: 0;
-    padding: 0 0.9rem;
-    height: 100%;
-    font-size: 0.78rem;
-    letter-spacing: 0.06em;
-    font-weight: 600;
-    color: var(--text-dim);
+  .dir-switch button {
+    border: none; border-radius: 0; padding: 0 0.9rem;
+    font-weight: 700; letter-spacing: 0.05em; height: 100%;
+    color: var(--text-dim); background: var(--bg);
   }
-  .direction-toggle button.active {
-    background: rgba(74, 222, 128, 0.15);
-    color: var(--green);
-    text-shadow: 0 0 6px var(--green-glow);
+  .dir-switch button.active {
+    background: rgba(74,222,128,0.18); color: var(--green);
+    text-shadow: 0 0 5px var(--green-glow);
   }
-  .direction-toggle button:first-child { border-right: 1px solid var(--border); }
+  .dir-switch button:first-child { border-right: 1px solid var(--border); }
 
-  /* Parameter-Feld */
-  #paramField.keyword input {
-    font-size: 0.98rem;
-    padding: 0.6rem 0.85rem;
-    letter-spacing: 0.12em;
-    font-weight: 600;
-    color: var(--green);
-    text-shadow: 0 0 6px var(--green-glow);
-  }
-  #paramField.hidden { display: none; }
-  #paramField.keyword input.uppercase {
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-  }
-  #paramField.keyword input.case-sensitive {
-    text-transform: none;
-    letter-spacing: 0.08em;
-  }
+  .param-container { display: flex; gap: 0.5rem; align-items: center; }
+  .param-container input { flex: 1; }
 
-  /* ══════════ ENIGMA-PANEL ══════════ */
-  .enigma-panel {
-    display: none;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 0.9rem 1rem;
+  /* ══════════ ENIGMA HARDWARE CONSOLE ══════════ */
+  .hardware-box {
+    display: none; background: #0b130c;
+    border: 1px solid var(--border-hi); border-radius: 6px;
+    padding: 0.9rem; gap: 0.75rem; flex-direction: column;
   }
-  .enigma-panel.active { display: block; }
-
-  .enigma-title {
-    font-size: 0.72rem;
-    color: var(--green-dim);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .enigma-title::before {
-    content: "▸";
-    color: var(--green);
-  }
-
-  .enigma-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .enigma-field {
-    display: flex; flex-direction: column; gap: 0.3rem;
-  }
-  .enigma-field label {
-    font-size: 0.66rem;
-    color: var(--green-dim);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 700;
-  }
-  .enigma-field select, .enigma-field input {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 0.82rem;
-    padding: 0.42rem 0.6rem;
-    border-radius: 3px;
-    outline: none;
-    transition: border-color 0.15s;
-    width: 100%;
-  }
-  .enigma-field select:focus, .enigma-field input:focus {
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.12);
-  }
-  .enigma-field select option {
-    background: #0a0f0a;
-    color: var(--text);
-  }
-
-  .enigma-field.plugboard {
-    grid-column: 1 / -1;
-  }
-  .enigma-field.plugboard input {
-    letter-spacing: 0.05em;
-    font-family: inherit;
-  }
-
-  .enigma-info {
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    padding: 0.45rem 0.7rem;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    margin-top: 0.4rem;
-    line-height: 1.5;
-  }
-  .enigma-info .key { color: var(--green); font-weight: 600; }
-
-  /* ══════════ INFO BOX ══════════ */
-  .info-box {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    overflow: hidden;
-    display: flex; flex-direction: column;
-  }
-  .info-header {
+  .hardware-box.active { display: flex; }
+  .hardware-title {
+    font-size: 0.74rem; font-weight: 700; color: var(--green);
+    letter-spacing: 0.1em; text-transform: uppercase;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0.5rem 0.9rem;
-    background: var(--panel-2);
-    border-bottom: 1px solid var(--border);
-    font-size: 0.72rem;
-    color: var(--green-dim);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 700;
+  }
+  .hardware-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.6rem;
+  }
+
+  /* ══════════ MORSE AUDIO PLAYER ══════════ */
+  .audio-player-bar {
+    display: none; align-items: center; justify-content: space-between;
+    padding: 0.5rem 0.85rem; background: #0d1a10;
+    border: 1px solid var(--border); border-radius: 4px; gap: 0.8rem; flex-wrap: wrap;
+  }
+  .audio-player-bar.active { display: flex; }
+  .audio-controls { display: flex; align-items: center; gap: 0.5rem; }
+
+  /* ══════════ DOSSIER (SYSTEM-INFO) ══════════ */
+  .dossier-box {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden;
+  }
+  .dossier-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 0.9rem; background: var(--panel-header);
     cursor: pointer; user-select: none;
+    color: var(--green); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
   }
-  .info-header:hover { color: var(--green); }
-  .info-header .toggle-hint {
-    font-size: 0.66rem;
-    color: var(--text-dim);
-    text-transform: none;
-    letter-spacing: 0.02em;
-    font-weight: 400;
+  .dossier-header:hover { background: #172619; }
+  .dossier-content {
+    padding: 1.1rem; line-height: 1.68; font-size: 0.86rem;
+    max-height: 480px; overflow-y: auto; border-top: 1px solid var(--border);
   }
-  .info-content {
-    padding: 0.95rem 1.1rem;
-    font-size: 0.85rem;
-    line-height: 1.68;
-    color: var(--text);
-    max-height: 340px;
-    overflow-y: auto;
-    transition: max-height 0.25s ease, padding 0.25s ease;
+  .dossier-box.collapsed .dossier-content { display: none; }
+  .dossier-section { margin-bottom: 0.9rem; }
+  .dossier-section h4 {
+    color: var(--green); font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 0.08em; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;
   }
-  .info-box.collapsed .info-content {
-    max-height: 0;
-    padding-top: 0; padding-bottom: 0;
-    overflow: hidden;
+  .dossier-section h4::before { content: "■"; font-size: 0.6rem; color: var(--green-dim); }
+  .dossier-section p { color: var(--text); margin-bottom: 0.4rem; }
+
+  /* ══════════ SEPARATE VIEWS: TOOLS & HASHES ══════════ */
+  .tools-view { display: none; flex-direction: column; gap: 0.85rem; }
+  .tools-view.active { display: flex; }
+
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
   }
-  .info-content p { margin-bottom: 0.65rem; }
-  .info-content p:last-child { margin-bottom: 0; }
-  .info-content .term { color: var(--green); font-weight: 600; }
-  .info-content .dim { color: var(--text-dim); }
-  .info-content .warn { color: var(--amber); font-weight: 600; }
-  .info-content .example {
-    display: inline-block;
-    background: rgba(74, 222, 128, 0.07);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 0.08rem 0.45rem;
-    color: var(--green-dim);
-    font-size: 0.82rem;
-    margin: 0.05rem 0;
+  @media (max-width: 900px) { .analysis-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.9rem; display: flex; flex-direction: column; gap: 0.65rem;
   }
-  .info-content code {
-    color: var(--green);
-    background: rgba(74, 222, 128, 0.07);
-    padding: 0.05rem 0.35rem;
-    border-radius: 2px;
-    font-size: 0.85rem;
+  .card-title {
+    font-size: 0.78rem; font-weight: 700; color: var(--green);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border); padding-bottom: 0.4rem;
   }
-  .info-content ul { margin: 0.3rem 0 0.65rem 1.1rem; }
-  .info-content li { margin-bottom: 0.25rem; }
-  .info-content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0.4rem 0 0.7rem;
-    font-size: 0.82rem;
+
+  /* Frequency Bars */
+  .freq-bars {
+    display: flex; flex-direction: column; gap: 0.35rem;
+    max-height: 380px; overflow-y: auto; padding-right: 0.4rem;
   }
-  .info-content table th, .info-content table td {
-    text-align: left;
-    padding: 0.3rem 0.55rem;
-    border-bottom: 1px solid var(--border);
+  .freq-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.75rem; }
+  .freq-char { width: 16px; font-weight: 700; color: var(--green); text-align: center; }
+  .freq-track { flex: 1; height: 14px; background: var(--bg); border-radius: 2px; overflow: hidden; display: flex; }
+  .freq-fill-actual { background: var(--green-dim); height: 100%; transition: width 0.2s; }
+  .freq-val { width: 45px; text-align: right; color: var(--text-dim); font-size: 0.7rem; }
+
+  /* Caesar Brute-Force Table */
+  .caesar-table-wrap { max-height: 380px; overflow-y: auto; }
+  .caesar-table {
+    width: 100%; border-collapse: collapse; font-size: 0.78rem;
   }
-  .info-content table th {
-    color: var(--green-dim);
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  .caesar-table th, .caesar-table td {
+    padding: 0.32rem 0.55rem; border-bottom: 1px solid var(--border); text-align: left;
   }
-  .info-content table td code { font-size: 0.8rem; }
+  .caesar-table th { color: var(--green); background: var(--panel-header); font-size: 0.7rem; }
+  .caesar-table tr:hover { background: rgba(74,222,128,0.04); cursor: pointer; }
+
+  /* Hash Suite */
+  .hash-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .hash-item { display: flex; flex-direction: column; gap: 0.2rem; }
+  .hash-item label { font-size: 0.7rem; color: var(--green-dim); font-weight: 700; }
+  .hash-output {
+    background: var(--bg); border: 1px solid var(--border);
+    padding: 0.45rem 0.65rem; border-radius: 4px; font-size: 0.8rem;
+    color: var(--text); word-break: break-all; user-select: all;
+  }
 
   /* ══════════ STATUS BAR ══════════ */
   .status-bar {
     display: flex; justify-content: space-between; align-items: center;
-    gap: 0.75rem;
-    padding: 0.4rem 0.85rem;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    font-size: 0.76rem;
-    color: var(--text-dim);
-    min-height: 32px;
-    flex-wrap: wrap;
+    padding: 0.45rem 0.85rem; background: var(--panel-header);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.76rem; color: var(--text-dim); gap: 1rem; flex-wrap: wrap;
   }
-  .status-bar .stat {
-    display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;
-  }
-  .status-bar .stat-item { color: var(--text-dim); }
-  .status-bar .stat-item b { color: var(--green); font-weight: 600; }
-  .status-bar .msg { color: var(--text); }
-  .status-bar .msg.error { color: var(--red); }
-  .status-bar .msg.ok { color: var(--green); }
+  .stat-group { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .stat-val { color: var(--green); font-weight: 700; }
+  .status-msg { font-weight: 600; }
+  .status-msg.ok { color: var(--green); }
+  .status-msg.error { color: var(--red); }
 
-  /* ══════════ SCROLLBAR ══════════ */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  /* ══════════ SCROLLBARS ══════════ */
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
-    background: var(--border-hi);
-    border-radius: 4px;
-  }
+  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--green-dark); }
-
-  /* ══════════ BUSY INDICATOR ══════════ */
-  .status-bar .busy {
-    display: none;
-    color: var(--amber);
-    font-weight: 600;
-  }
-  .status-bar .busy.active { display: inline; }
 </style>
 </head>
 <body>
+
 <div class="app">
 
+  <!-- ══════════ HEADER ══════════ -->
   <header>
-    <h1><span class="prompt">$</span> CipherLab</h1>
-    <div class="subtitle">
-      Zahlensysteme <span class="accent">·</span>
-      Base-Kodierungen <span class="accent">·</span>
-      Klassische Chiffren <span class="accent">·</span>
-      Rotormaschinen <span class="accent">·</span>
-      Moderne Verfahren
+    <div class="brand">
+      <h1><span>$</span> CipherLab</h1>
+      <span class="tag">Security & Cryptology Suite</span>
     </div>
+    <nav class="app-tabs">
+      <button class="tab-btn active" data-view="workspace">⌨ Labor & Chiffren</button>
+      <button class="tab-btn" data-view="analysis">📊 Krypto-Analyse & Brute-Force</button>
+      <button class="tab-btn" data-view="hashes">⚡ Hash-Labor</button>
+    </nav>
   </header>
 
-  <div class="main-grid">
-    <div class="panel">
-      <div class="panel-header">
-        <span>◤ INPUT</span>
-        <span class="meta" id="inputMeta"></span>
+  <!-- ══════════ VIEW 1: WORKSPACE ══════════ -->
+  <div class="workspace-view" id="workspaceView">
+
+    <div class="grid-io">
+      <!-- Input Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>◤ INPUT (QUELLE)</span>
+          <span class="panel-meta" id="inputMeta">0 Zeichen · 0 B</span>
+        </div>
+        <div class="dropzone" id="inputDropzone">
+          <textarea id="inputText" placeholder="Text, Ziffern oder Base-Daten hier eingeben oder Datei hier ablegen…" spellcheck="false" autocomplete="off"></textarea>
+        </div>
+        <div class="panel-footer">
+          <div class="btn-group">
+            <button id="clearBtn" title="Inhalt leeren">[ ✕ ] Leeren</button>
+            <button id="pasteBtn" title="Aus Zwischenablage einfügen">[ 📋 ] Einfügen</button>
+            <button id="copyInputBtn" title="Eingabe in Zwischenablage">[ ⧉ ] Kopieren</button>
+          </div>
+          <div class="btn-group">
+            <input type="file" id="fileInput" style="display:none">
+            <button id="uploadBtn" title="Text- oder Binärdatei laden">[ 📂 ] Datei laden</button>
+          </div>
+        </div>
       </div>
-      <div class="panel-body">
-        <textarea id="inputText" placeholder="Text, Zahl oder Daten hier eingeben…" spellcheck="false" autocomplete="off"></textarea>
-      </div>
-      <div class="panel-footer">
-        <button id="clearBtn" title="Eingabe leeren">[ ✕ ] Leeren</button>
-        <button id="pasteBtn" title="Aus Zwischenablage einfügen">[ ⌘V ] Einfügen</button>
-        <button id="copyInputBtn" title="Eingabe kopieren">[ ⧉ ] Kopieren</button>
+
+      <!-- Output Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>◤ OUTPUT (ZIEL)</span>
+          <span class="panel-meta" id="outputMeta">0 Zeichen · 0 B</span>
+        </div>
+        <div class="dropzone">
+          <textarea id="outputText" placeholder="Berechnetes Ergebnis erscheint sofort hier…" readonly spellcheck="false"></textarea>
+        </div>
+        <div class="panel-footer">
+          <div class="btn-group">
+            <button id="copyOutputBtn" title="Ergebnis kopieren">[ ⧉ ] Kopieren</button>
+            <button id="swapBtn" title="Ergebnis als Eingabe übernehmen und Richtung umkehren">[ ⇄ ] Als Eingabe</button>
+          </div>
+          <div class="btn-group">
+            <button id="downloadBtn" title="Ergebnis als Datei speichern">[ 💾 ] Herunterladen</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-header">
-        <span>◤ OUTPUT</span>
-        <span class="meta" id="outputMeta"></span>
+    <!-- ══════════ CONTROLS ══════════ -->
+    <div class="control-deck">
+      <div class="control-row">
+        <!-- Direction Switch -->
+        <div class="field">
+          <label>Richtung</label>
+          <div class="dir-switch" id="dirSwitch">
+            <button data-dir="encode" class="active">ENCODE →</button>
+            <button data-dir="decode">← DECODE</button>
+          </div>
+        </div>
+
+        <!-- Method Selection -->
+        <div class="field field-wide">
+          <label for="methodSelect">Verfahren / Algorithmus</label>
+          <select id="methodSelect">
+            <option value="" disabled selected>— Bitte ein Verfahren auswählen —</option>
+          </select>
+        </div>
+
+        <!-- Dynamic Parameters -->
+        <div class="field" id="paramFieldWrapper" style="display:none;">
+          <label id="paramLabel" for="paramInput">Parameter</label>
+          <div class="param-container">
+            <input type="text" id="paramInput" autocomplete="off" spellcheck="false">
+            <button id="togglePwBtn" type="button" style="display:none" title="Passwort ein-/ausblenden">👁</button>
+            <button id="genOtpBtn" type="button" style="display:none" title="Zufälligen OTP-Schlüssel erzeugen">🎲 Generieren</button>
+          </div>
+        </div>
       </div>
-      <div class="panel-body">
-        <textarea id="outputText" placeholder="Ergebnis erscheint hier automatisch…" readonly spellcheck="false"></textarea>
-      </div>
-      <div class="panel-footer">
-        <button id="copyOutputBtn" title="Ergebnis kopieren">[ ⧉ ] Kopieren</button>
-        <button id="swapBtn" title="Ergebnis als Eingabe verwenden (und Richtung tauschen)">[ ⇄ ] Als Eingabe</button>
+
+      <!-- Number System Dual Switch -->
+      <div class="field" id="numSysModeRow" style="display:none;">
+        <label>Zahlensystem-Modus</label>
+        <div class="dir-switch" id="numSysModeSwitch" style="height:30px; width:fit-content;">
+          <button data-mode="math" class="active">Reine Zahl (Mathematisch)</button>
+          <button data-mode="bytes">Text / UTF-8 Bytes</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="controls">
-    <div class="field">
-      <label>Richtung</label>
-      <div class="direction-toggle" id="directionToggle">
-        <button data-dir="encode" class="active">ENCODE →</button>
-        <button data-dir="decode">← DECODE</button>
-      </div>
-    </div>
-
-    <div class="field field--wide">
-      <label for="method">Verfahren</label>
-      <select id="method">
-        <option value="" disabled selected>— Bitte ein Verfahren auswählen —</option>
-      </select>
-    </div>
-
-    <div class="field" id="paramField">
-      <label id="paramLabel" for="paramInput">Parameter</label>
-      <input type="text" id="paramInput" autocomplete="off" spellcheck="false">
-    </div>
-  </div>
-
-  <!-- ENIGMA-KONFIGURATION -->
-  <div class="enigma-panel" id="enigmaPanel">
-    <div class="enigma-title">Enigma-Konfiguration</div>
-    <div class="enigma-row">
-      <div class="enigma-field">
-        <label for="enigmaRotor1">Walze 1 (links)</label>
-        <select id="enigmaRotor1">
-          <option value="I">I</option>
-          <option value="II">II</option>
-          <option value="III">III</option>
-          <option value="IV">IV</option>
-          <option value="V">V</option>
+    <!-- ══════════ MORSE AUDIO PLAYER ══════════ -->
+    <div class="audio-player-bar" id="morsePlayerBar">
+      <div style="font-weight:700; color:var(--green); font-size:0.75rem;">♫ MORSECODE AUDIO-SYNTHESIZER</div>
+      <div class="audio-controls">
+        <label style="font-size:0.7rem; color:var(--text-dim);">Geschwindigkeit:</label>
+        <select id="morseWpm" style="background:var(--bg); border:1px solid var(--border); color:var(--text); font-size:0.75rem; padding:0.2rem 0.4rem; border-radius:3px;">
+          <option value="12">12 WPM (Langsam)</option>
+          <option value="18" selected>18 WPM (Standard)</option>
+          <option value="25">25 WPM (Schnell)</option>
         </select>
-      </div>
-      <div class="enigma-field">
-        <label for="enigmaRotor2">Walze 2 (mitte)</label>
-        <select id="enigmaRotor2">
-          <option value="I">I</option>
-          <option value="II" selected>II</option>
-          <option value="III">III</option>
-          <option value="IV">IV</option>
-          <option value="V">V</option>
-        </select>
-      </div>
-      <div class="enigma-field">
-        <label for="enigmaRotor3">Walze 3 (rechts)</label>
-        <select id="enigmaRotor3">
-          <option value="I">I</option>
-          <option value="II">II</option>
-          <option value="III" selected>III</option>
-          <option value="IV">IV</option>
-          <option value="V">V</option>
-        </select>
-      </div>
-      <div class="enigma-field">
-        <label for="enigmaReflector">Reflektor</label>
-        <select id="enigmaReflector">
-          <option value="B" selected>B (UKW-B)</option>
-          <option value="C">C (UKW-C)</option>
-        </select>
+        <button id="playMorseBtn">▶ Anhören</button>
+        <button id="stopMorseBtn" disabled>⏹ Stopp</button>
       </div>
     </div>
-    <div class="enigma-row">
-      <div class="enigma-field">
-        <label for="enigmaPos1">Grundstellung Walze 1</label>
-        <select id="enigmaPos1"></select>
+
+    <!-- ══════════ ENIGMA CONSOLE ══════════ -->
+    <div class="hardware-box" id="enigmaConsole">
+      <div class="hardware-title">
+        <span>⚙ Wehrmacht Enigma I / M3 Maschinensimulator</span>
+        <span style="font-size:0.68rem; color:var(--text-dim);" id="enigmaLivePositions">Position: A - A - A</span>
       </div>
-      <div class="enigma-field">
-        <label for="enigmaPos2">Grundstellung Walze 2</label>
-        <select id="enigmaPos2"></select>
+      <div class="hardware-grid">
+        <div class="field">
+          <label for="enigmaR1">Walze I (Links)</label>
+          <select id="enigmaR1"></select>
+        </div>
+        <div class="field">
+          <label for="enigmaR2">Walze II (Mitte)</label>
+          <select id="enigmaR2"></select>
+        </div>
+        <div class="field">
+          <label for="enigmaR3">Walze III (Rechts)</label>
+          <select id="enigmaR3"></select>
+        </div>
+        <div class="field">
+          <label for="enigmaRef">Reflektor (UKW)</label>
+          <select id="enigmaRef">
+            <option value="B" selected>UKW-B</option>
+            <option value="C">UKW-C</option>
+          </select>
+        </div>
       </div>
-      <div class="enigma-field">
-        <label for="enigmaPos3">Grundstellung Walze 3</label>
-        <select id="enigmaPos3"></select>
+      <div class="hardware-grid">
+        <div class="field">
+          <label for="enigmaPos1">Grundstellung 1</label>
+          <select id="enigmaPos1"></select>
+        </div>
+        <div class="field">
+          <label for="enigmaPos2">Grundstellung 2</label>
+          <select id="enigmaPos2"></select>
+        </div>
+        <div class="field">
+          <label for="enigmaPos3">Grundstellung 3</label>
+          <select id="enigmaPos3"></select>
+        </div>
+        <div class="field">
+          <label for="enigmaRing1">Ringstellung 1</label>
+          <select id="enigmaRing1"></select>
+        </div>
+        <div class="field">
+          <label for="enigmaRing2">Ringstellung 2</label>
+          <select id="enigmaRing2"></select>
+        </div>
+        <div class="field">
+          <label for="enigmaRing3">Ringstellung 3</label>
+          <select id="enigmaRing3"></select>
+        </div>
       </div>
-      <div class="enigma-field">
-        <label for="enigmaRing1">Ringstellung 1</label>
-        <select id="enigmaRing1"></select>
-      </div>
-      <div class="enigma-field">
-        <label for="enigmaRing2">Ringstellung 2</label>
-        <select id="enigmaRing2"></select>
-      </div>
-      <div class="enigma-field">
-        <label for="enigmaRing3">Ringstellung 3</label>
-        <select id="enigmaRing3"></select>
+      <div class="field">
+        <label for="enigmaPlugboard">Steckbrett (Buchstabenpaare mit Leerzeichen trennen, z. B. 'AV BS CG')</label>
+        <input type="text" id="enigmaPlugboard" placeholder="z. B. AV BS CG DL FU HZ IN KM OW RX" spellcheck="false">
       </div>
     </div>
-    <div class="enigma-row">
-      <div class="enigma-field plugboard">
-        <label for="enigmaPlugboard">Steckbrett (Paare durch Leerzeichen, z.B. "AB CD EF")</label>
-        <input type="text" id="enigmaPlugboard" placeholder="z.B. AB CD EF" autocomplete="off" spellcheck="false">
+
+    <!-- ══════════ DOSSIER ACCORDION ══════════ -->
+    <div class="dossier-box" id="dossierBox">
+      <div class="dossier-header" id="dossierHeader" tabindex="0" role="button" aria-expanded="true">
+        <span id="dossierTitle">▸ AUSFÜHRLICHES SYSTEM-DOSSIER</span>
+        <span style="font-size:0.68rem; color:var(--text-dim);">[ Klick zum Ein-/Ausklappen ]</span>
+      </div>
+      <div class="dossier-content" id="dossierContent">
+        <div class="dossier-section">
+          <h4>Bereit</h4>
+          <p>Bitte wählen Sie oben ein kryptographisches Verfahren oder eine Kodierung aus. Anschließend wird an dieser Stelle das vollständige Dossier zu Geschichte, mathematischer Funktionsweise und praktischer Anwendung angezeigt.</p>
+        </div>
       </div>
     </div>
-    <div class="enigma-info" id="enigmaStatus"></div>
+
   </div>
 
-  <div class="info-box" id="infoBox">
-    <div class="info-header" id="infoHeader">
-      <span>▸ Verfahrens-Info</span>
-      <span class="toggle-hint">[ klicken zum Ein-/Ausklappen ]</span>
+  <!-- ══════════ VIEW 2: CRYPTANALYSIS & BRUTE-FORCE ══════════ -->
+  <div class="tools-view" id="analysisView">
+    <div class="analysis-grid">
+      <!-- Magic Detector -->
+      <div class="card">
+        <div class="card-title">🔍 Intelligenter Erkennungs-Assistent (Magic Detector)</div>
+        <p style="font-size:0.75rem; color:var(--text-dim);">Untersucht die Eingabe auf charakteristische Heuristiken, Zeichensätze und Signaturen bekannter Verfahren:</p>
+        <div id="detectorResults" style="display:flex; flex-direction:column; gap:0.45rem; margin-top:0.3rem;">
+          <div style="color:var(--text-mute);">Keine Daten zur Inspektion vorhanden.</div>
+        </div>
+      </div>
+
+      <!-- Frequency Analysis -->
+      <div class="card">
+        <div class="card-title">📊 Buchstaben-Häufigkeitsanalyse (Monogramme)</div>
+        <p style="font-size:0.75rem; color:var(--text-dim);">Vergleicht die relative Buchstabenhäufigkeit der Eingabe mit den Standardwerten der deutschen Sprache:</p>
+        <div class="freq-bars" id="freqBars"></div>
+      </div>
     </div>
-    <div class="info-content" id="infoContent">
-      <p>Bitte wählen Sie oben ein Verfahren aus. Hier erscheint dann eine ausführliche Beschreibung mit Beispiel und Verwendungshinweisen.</p>
+
+    <!-- Caesar 25-Shift Brute-Force Table -->
+    <div class="card">
+      <div class="card-title">⚔ Cäsar-Chiffre: Vollständige Brute-Force Entschlüsselung (Alle 25 Rotationen)</div>
+      <div class="caesar-table-wrap">
+        <table class="caesar-table">
+          <thead>
+            <tr>
+              <th style="width:70px;">Shift</th>
+              <th>Entschlüsselter Textauszug (Klick zum Übernehmen)</th>
+            </tr>
+          </thead>
+          <tbody id="caesarBruteBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="status-bar">
-    <div class="stat">
-      <span class="stat-item">Verfahren: <b id="statMethod">—</b></span>
-      <span class="stat-item">Richtung: <b id="statDirection">ENCODE</b></span>
-      <span class="busy" id="busyIndicator">⟳ rechne…</span>
+  <!-- ══════════ VIEW 3: HASH LABOR ══════════ -->
+  <div class="tools-view" id="hashesView">
+    <div class="card">
+      <div class="card-title">⚡ Kryptographische Prüfsummen & Einweg-Hashfunktionen</div>
+      <p style="font-size:0.78rem; color:var(--text-dim);">Hashes sind irreversible mathematische Fingerabdrücke der Eingabe. Schon die Änderung eines einzigen Bits erzeugt einen völlig anderen Hashwert (Avalanche-Effekt).</p>
+      <div class="hash-list" style="margin-top:0.8rem;">
+        <div class="hash-item">
+          <label>MD5 (128-Bit · Message Digest 5 · Nicht kollisionsresistent):</label>
+          <div class="hash-output" id="hashMd5">—</div>
+        </div>
+        <div class="hash-item">
+          <label>SHA-1 (160-Bit · Secure Hash Algorithm 1 · Veraltet):</label>
+          <div class="hash-output" id="hashSha1">—</div>
+        </div>
+        <div class="hash-item">
+          <label>SHA-256 (256-Bit · SHA-2 Familie · Aktueller Industriestandard & Bitcoin):</label>
+          <div class="hash-output" id="hashSha256">—</div>
+        </div>
+        <div class="hash-item">
+          <label>SHA-512 (512-Bit · Maximale Sicherheit für Hochsicherheitsanwendungen):</label>
+          <div class="hash-output" id="hashSha512">—</div>
+        </div>
+      </div>
     </div>
-    <div class="msg" id="statusMsg">Bereit.</div>
   </div>
+
+  <!-- ══════════ FOOTER STATUS BAR ══════════ -->
+  <footer class="status-bar">
+    <div class="stat-group">
+      <span>Verfahren: <b class="stat-val" id="statMethod">—</b></span>
+      <span>Richtung: <b class="stat-val" id="statDirection">ENCODE</b></span>
+    </div>
+    <div class="status-msg ok" id="statusMsg">Bereit. Bitte Verfahren auswählen.</div>
+  </footer>
 
 </div>
 
@@ -650,1559 +617,1650 @@
 (function(){
   'use strict';
 
+  // ═══════════════════════════════════════════════════════
+  //  DOM SELECTORS & STATE
+  // ═══════════════════════════════════════════════════════
   const $ = id => document.getElementById(id);
-  const inputText   = $('inputText');
-  const outputText  = $('outputText');
-  const methodSel   = $('method');
-  const paramField  = $('paramField');
-  const paramInput  = $('paramInput');
-  const paramLabel  = $('paramLabel');
-  const clearBtn    = $('clearBtn');
-  const copyInputBtn= $('copyInputBtn');
-  const pasteBtn    = $('pasteBtn');
-  const copyOutputBtn = $('copyOutputBtn');
-  const swapBtn     = $('swapBtn');
-  const infoBox     = $('infoBox');
-  const infoHeader  = $('infoHeader');
-  const infoContent = $('infoContent');
-  const statusMsg   = $('statusMsg');
-  const inputMeta   = $('inputMeta');
-  const outputMeta  = $('outputMeta');
-  const dirToggle   = $('directionToggle');
-  const statMethod  = $('statMethod');
-  const statDirection = $('statDirection');
-  const busyIndicator = $('busyIndicator');
-  const enigmaPanel = $('enigmaPanel');
-  const enigmaStatus = $('enigmaStatus');
+  const inputText      = $('inputText');
+  const outputText     = $('outputText');
+  const methodSelect   = $('methodSelect');
+  const paramFieldWrap = $('paramFieldWrapper');
+  const paramInput     = $('paramInput');
+  const paramLabel     = $('paramLabel');
+  const togglePwBtn    = $('togglePwBtn');
+  const genOtpBtn      = $('genOtpBtn');
+  const numSysModeRow  = $('numSysModeRow');
+  const numSysSwitch   = $('numSysModeSwitch');
+  const enigmaConsole  = $('enigmaConsole');
+  const morsePlayerBar = $('morsePlayerBar');
+  const inputMeta      = $('inputMeta');
+  const outputMeta     = $('outputMeta');
+  const statusMsg      = $('statusMsg');
+  const statMethod     = $('statMethod');
+  const statDirection  = $('statDirection');
+  const dossierBox     = $('dossierBox');
+  const dossierContent = $('dossierContent');
 
-  let direction = 'encode';
+  let currentDirection = 'encode'; // 'encode' | 'decode'
+  let numSysMode = 'math';        // 'math' | 'bytes'
   let debounceTimer = null;
+  let convertCounter = 0;
 
-  // ═══════════════════════════════════════════════
-  //  ZAHLENSYSTEME (Base 2–20 + 60) – byte-basiert
-  // ═══════════════════════════════════════════════
-  const DIGITS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  // ═══════════════════════════════════════════════════════
+  //  TAB ROUTING
+  // ═══════════════════════════════════════════════════════
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const view = btn.dataset.view;
+      $('workspaceView').classList.toggle('hidden', view !== 'workspace');
+      $('analysisView').classList.toggle('active', view === 'analysis');
+      $('hashesView').classList.toggle('active', view === 'hashes');
+      if (view === 'analysis') updateAnalysisTools();
+      if (view === 'hashes') updateHashes();
+    });
+  });
 
-  const NUMBER_SYSTEMS = [
-    { base: 2,  de: 'Binärsystem',          en: 'Binary',       digits: '0–1' },
-    { base: 3,  de: 'Ternärsystem',         en: 'Ternary',      digits: '0–2' },
-    { base: 4,  de: 'Quaternärsystem',      en: 'Quaternary',   digits: '0–3' },
-    { base: 5,  de: 'Quinärsystem',         en: 'Quinary',      digits: '0–4' },
-    { base: 6,  de: 'Senärsystem',          en: 'Senary',       digits: '0–5' },
-    { base: 7,  de: 'Septenärsystem',       en: 'Septenary',    digits: '0–6' },
-    { base: 8,  de: 'Oktalsystem',          en: 'Octal',        digits: '0–7' },
-    { base: 9,  de: 'Nonärsystem',          en: 'Nonary',       digits: '0–8' },
-    { base: 10, de: 'Dezimalsystem',        en: 'Decimal',      digits: '0–9' },
-    { base: 11, de: 'Undezimalsystem',      en: 'Undecimal',    digits: '0–9, A' },
-    { base: 12, de: 'Duodezimalsystem',     en: 'Duodecimal',   digits: '0–9, A, B' },
-    { base: 13, de: 'Tridezimalsystem',     en: 'Tridecimal',   digits: '0–9, A–C' },
-    { base: 14, de: 'Tetradezimalsystem',   en: 'Tetradecimal', digits: '0–9, A–D' },
-    { base: 15, de: 'Pentadezimalsystem',   en: 'Pentadecimal', digits: '0–9, A–E' },
-    { base: 16, de: 'Hexadezimalsystem',    en: 'Hexadecimal',  digits: '0–9, A–F' },
-    { base: 17, de: 'Heptadezimalsystem',   en: 'Heptadecimal', digits: '0–9, A–G' },
-    { base: 18, de: 'Oktodezimalsystem',    en: 'Octodecimal',  digits: '0–9, A–H' },
-    { base: 19, de: 'Nonadezimalsystem',    en: 'Nonadecimal',  digits: '0–9, A–I' },
-    { base: 20, de: 'Vigesimalsystem',      en: 'Vigesimal',    digits: '0–9, A–J' },
-    { base: 60, de: 'Sexagesimalsystem',    en: 'Sexagesimal',  digits: '60 Ziffern' },
-  ];
-
-  // ═══════════════════════════════════════════════
-  //  BASE-KODIERUNGEN (ohne Base16 – siehe Zahlensysteme)
-  // ═══════════════════════════════════════════════
-  const BASE_CODINGS = [
-    { id:'base32',     name:'Base32 · Standard',         std:'RFC 4648' },
-    { id:'base32hex',  name:'Base32hex · Extended Hex',  std:'RFC 4648' },
-    { id:'base32z',    name:'Base32 · z-base-32',        std:'z-base-32' },
-    { id:'base32cr',   name:'Base32 · Crockford',        std:'Crockford Base32' },
-    { id:'base45',     name:'Base45',                    std:'RFC 9285' },
-    { id:'base58btc',  name:'Base58 · Bitcoin',          std:'Bitcoin-Alphabet' },
-    { id:'base58fl',   name:'Base58 · Flickr',           std:'Flickr-Alphabet' },
-    { id:'base64',     name:'Base64 · Standard',         std:'RFC 4648' },
-    { id:'base64url',  name:'Base64url',                 std:'RFC 4648' },
-    { id:'base64mime', name:'Base64 · MIME',             std:'RFC 2045' },
-    { id:'base85',     name:'Base85 · Ascii85',          std:'Adobe/PostScript' },
-    { id:'z85',        name:'Z85 · ZeroMQ',              std:'ZeroMQ Z85' },
-    { id:'base91',     name:'Base91',                    std:'Base91-Spezifikation' },
-  ];
-
-  // ═══════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════
   //  VERFAHRENS-REGISTRY
-  // ═══════════════════════════════════════════════
-  const methods = [];
+  // ═══════════════════════════════════════════════════════
+  const RAW_METHODS = [
+    // ── ZAHLENSYSTEME (Reihenfolge bleibt erhalten) ──
+    { id:'base2',  cat:'Zahlensysteme', name:'Base 2 · Dualsystem / Binär', base:2 },
+    { id:'base3',  cat:'Zahlensysteme', name:'Base 3 · Ternärsystem', base:3 },
+    { id:'base4',  cat:'Zahlensysteme', name:'Base 4 · Quaternärsystem', base:4 },
+    { id:'base8',  cat:'Zahlensysteme', name:'Base 8 · Oktalsystem', base:8 },
+    { id:'base10', cat:'Zahlensysteme', name:'Base 10 · Dezimalsystem', base:10 },
+    { id:'base12', cat:'Zahlensysteme', name:'Base 12 · Duodezimalsystem', base:12 },
+    { id:'base16', cat:'Zahlensysteme', name:'Base 16 · Hexadezimalsystem', base:16 },
+    { id:'base20', cat:'Zahlensysteme', name:'Base 20 · Vigesimalsystem (Maya)', base:20 },
+    { id:'base60', cat:'Zahlensysteme', name:'Base 60 · Sexagesimalsystem (Babylon)', base:60 },
 
-  NUMBER_SYSTEMS.forEach(ns => {
-    methods.push({
-      id: 'numsys_' + ns.base,
-      group: 'Zahlensysteme',
-      name: 'Base ' + ns.base + ' · ' + ns.de + ' (' + ns.en + ')',
-      param: null,
-      baseInfo: ns,
-      hint: 'Byte-basiert. Ziffern: ' + ns.digits
-    });
-  });
+    // ── BASE-KODIERUNGEN (Reihenfolge bleibt erhalten) ──
+    { id:'base32',    cat:'Base-Kodierungen', name:'Base32 (RFC 4648)' },
+    { id:'base32hex', cat:'Base-Kodierungen', name:'Base32hex (Extended Hex)' },
+    { id:'base32cr',  cat:'Base-Kodierungen', name:'Base32 (Crockford)' },
+    { id:'base45',    cat:'Base-Kodierungen', name:'Base45 (RFC 9285 · QR/COVID)' },
+    { id:'base58btc', cat:'Base-Kodierungen', name:'Base58 (Bitcoin Alphabet)' },
+    { id:'base58fl',  cat:'Base-Kodierungen', name:'Base58 (Flickr Alphabet)' },
+    { id:'base64',    cat:'Base-Kodierungen', name:'Base64 Standard (RFC 4648)' },
+    { id:'base64url', cat:'Base-Kodierungen', name:'Base64URL (URL-Safe)' },
+    { id:'base64mime',cat:'Base-Kodierungen', name:'Base64 MIME (76 Zeichen Umbruch)' },
+    { id:'base85',    cat:'Base-Kodierungen', name:'Base85 / Ascii85 (Adobe Standard)' },
+    { id:'z85',       cat:'Base-Kodierungen', name:'Z85 (ZeroMQ Spezifikation)' },
+    { id:'base91',    cat:'Base-Kodierungen', name:'Base91 (Kompakte 13-Bit Kodierung)' },
 
-  BASE_CODINGS.forEach(bc => {
-    methods.push({
-      id: bc.id,
-      group: 'Base-Kodierungen',
-      name: bc.name + ' (' + bc.std + ')',
-      param: null,
-      hint: bc.std
-    });
-  });
+    // ── KLASSISCHE CHIFFREN (Wird alphabetisch sortiert) ──
+    { id:'affine',    cat:'Klassische Chiffren', name:'Affine Chiffre (E(x) = (ax+b) mod 26)', param:'text' },
+    { id:'atbash',    cat:'Klassische Chiffren', name:'Atbash (Hebräische Spiegelchiffre)' },
+    { id:'bacon',     cat:'Klassische Chiffren', name:'Bacon-Chiffre (Bilaterale 5-Bit Chiffre)' },
+    { id:'bifid',     cat:'Klassische Chiffren', name:'Bifid-Chiffre (Delastelle)', param:'text' },
+    { id:'caesar',    cat:'Klassische Chiffren', name:'Cäsar-Chiffre / ROT-N', param:'number' },
+    { id:'morse',     cat:'Klassische Chiffren', name:'Morsecode (ITU-R M.1677)' },
+    { id:'playfair',  cat:'Klassische Chiffren', name:'Playfair-Chiffre (5×5 Matrix)', param:'text' },
+    { id:'polybius',  cat:'Klassische Chiffren', name:'Polybius-Quadrat (Koordinaten-Chiffre)' },
+    { id:'railfence', cat:'Klassische Chiffren', name:'Rail Fence (Zickzack-Transposition)', param:'number' },
+    { id:'rot13',     cat:'Klassische Chiffren', name:'ROT13 (Symmetrisch)' },
+    { id:'rot47',     cat:'Klassische Chiffren', name:'ROT47 (ASCII Druckbereich)' },
+    { id:'skytale',   cat:'Klassische Chiffren', name:'Skytale von Sparta (Zylindertransposition)', param:'number' },
+    { id:'autokey',   cat:'Klassische Chiffren', name:'Vigenère-Autokey (Selbstschlüsselnd)', param:'text' },
+    { id:'vigenere',  cat:'Klassische Chiffren', name:'Vigenère-Chiffre (Klassisch)', param:'text' },
 
-  methods.push(
-    { id:'affine',   group:'Klassische Chiffren',
-      name:'Affine Chiffre',        param:'affine',
-      hint:'E(x) = (a·x + b) mod 26. a muss teilerfremd zu 26 sein.' },
-    { id:'atbash',   group:'Klassische Chiffren',
-      name:'Atbash',                param:null,
-      hint:'Spiegelung des Alphabets: A↔Z, B↔Y, C↔X.' },
-    { id:'bacon',    group:'Klassische Chiffren',
-      name:'Bacon-Chiffre',         param:null,
-      hint:'Jeder Buchstabe als 5-Bit-Muster aus a/b.' },
-    { id:'caesar',   group:'Klassische Chiffren',
-      name:'Cäsar / ROT13',         param:'number', caseMode:'upper',
-      hint:'Buchstaben werden um einen festen Shift verschoben.' },
-    { id:'morse',    group:'Klassische Chiffren',
-      name:'Morsecode',             param:null,
-      hint:'Punkte & Striche. Buchstaben durch Leerzeichen, Wörter durch /.' },
-    { id:'polybius', group:'Klassische Chiffren',
-      name:'Polybius-Quadrat',      param:null,
-      hint:'5×5-Raster, Buchstaben → Koordinatenpaare (1–5).' },
-    { id:'railfence',group:'Klassische Chiffren',
-      name:'Rail Fence (Zickzack)', param:'number',
-      hint:'Transposition im Zickzack über mehrere Zeilen.' },
-    { id:'vigenere', group:'Klassische Chiffren',
-      name:'Vigenère',              param:'keyword', caseMode:'upper',
-      hint:'Polyalphabetisch mit Schlüsselwort. Sicherer als Cäsar.' },
-  );
+    // ── ROTORMASCHINEN ──
+    { id:'enigma',    cat:'Rotormaschinen', name:'Enigma I / M3 (Deutsche Wehrmacht)' },
 
-  methods.push(
-    { id:'enigma', group:'Rotormaschinen',
-      name:'Enigma (Wehrmacht, 3 Walzen)', param:null,
-      hint:'Die legendäre deutsche Rotor-Chiffriermaschine aus dem Zweiten Weltkrieg.' },
-  );
+    // ── MODERNE & PERFEKTE VERFAHREN (Wird alphabetisch sortiert) ──
+    { id:'aesgcm',    cat:'Moderne & Perfekte Verfahren', name:'AES-256-GCM + PBKDF2 (Authentifizierte Verschlüsselung)', param:'password' },
+    { id:'xorascii',  cat:'Moderne & Perfekte Verfahren', name:'Erweitertes Multi-Byte XOR', param:'text' },
+    { id:'otp',       cat:'Moderne & Perfekte Verfahren', name:'One-Time Pad (Informationstheoretisch Perfekt)', param:'text' }
+  ];
 
-  methods.push(
-    { id:'xorascii', group:'Moderne Verfahren',
-      name:'Erweitertes Vigenère (XOR/ASCII)', param:'keyword', caseMode:'any',
-      hint:'ASCII/Unicode-basiert: jedes Zeichen wird per XOR mit dem Passwort verknüpft.' },
-    { id:'rot47',   group:'Moderne Verfahren',
-      name:'ROT47',                 param:null,
-      hint:'Verschiebt alle 94 druckbaren ASCII-Zeichen um 47.' },
-  );
-
-  methods.push(
-    { id:'aesgcm',  group:'Verschlüsselung (Passwort-basiert)',
-      name:'AES-256-GCM + PBKDF2',  param:'password', caseMode:'any',
-      hint:'Echter Industriestandard. Passwort → PBKDF2 → 256-Bit-Key → AES-GCM.' },
-  );
-
-  // ═══════════════════════════════════════════════
-  //  INFO-TEXTE
-  // ═══════════════════════════════════════════════
-  const infos = {
-
-    // ── Zahlensysteme (je Base eigener Text) ──
-    numsys_2: `<p><span class="term">Binärsystem (Base 2)</span> ist das Fundament der gesamten digitalen Welt. Ein Computer kennt nur zwei Zustände – Strom an (<code>1</code>) oder Strom aus (<code>0</code>). Jede Information, ob Text, Bild oder Ton, wird letztlich als lange Folge von Nullen und Einsen gespeichert.</p>
-              <p>Die Ziffern <code>0</code> und <code>1</code> werden auch <em>Bits</em> genannt. Acht Bits bilden ein <em>Byte</em>, mit dem sich 256 verschiedene Werte darstellen lassen – genug für einen Buchstaben im ASCII- oder UTF-8-Zeichensatz.</p>
-              <p><span class="term">Beispiel:</span> Der Buchstabe <code>"A"</code> hat den Byte-Wert 65 und wird binär zu <span class="example">01000001</span>. Der Text <code>"Hi"</code> wird zu <span class="example">01001000 01101001</span>.</p>
-              <p class="dim">Verwendung: Hardware-Schaltungen, Logikgatter, Bitmasken, Netzwerkprotokolle, Kryptographie, Speicherverwaltung.</p>`,
-
-    numsys_3: `<p><span class="term">Ternärsystem (Base 3)</span> verwendet drei Ziffern: <code>0</code>, <code>1</code> und <code>2</code>. Es ist mathematisch die <em>effizienteste</em> Basis überhaupt – gemessen daran, wie viel Information pro Ziffer gespeichert werden kann (radix economy).</p>
-              <p>In der Geschichte gab es tatsächlich Ternärcomputer, z. B. die sowjetische <em>Setun</em> von 1958. Sie war robuster und energiesparender als zeitgenössische Binärrechner, setzte sich aber wirtschaftlich nicht durch.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 5 wird ternär zu <span class="example">12</span> (1·3 + 2 = 5), die 100 zu <span class="example">10201</span>.</p>
-              <p class="dim">Verwendung: Experimentelle Rechnerarchitekturen, Tristate-Logik (drei Zustände: -1, 0, +1), theoretische Informatik.</p>`,
-
-    numsys_4: `<p><span class="term">Quaternärsystem (Base 4)</span> nutzt die Ziffern <code>0</code> bis <code>3</code>. Zwei Binärbits entsprechen genau einer Quaternärziffer – das macht die Basis 4 zu einer kompakten Darstellung von Binärdaten.</p>
-              <p><span class="term">Beispiel:</span> <code>"A"</code> hat den Byte-Wert 65 und wird quaternär zu <span class="example">1001</span> (1·64 + 0·16 + 0·4 + 1 = 65).</p>
-              <p class="dim">Verwendung: DNA-Speicherung (4 Basen), kompakte Bit-Darstellung, genetische Algorithmen.</p>`,
-
-    numsys_5: `<p><span class="term">Quinärsystem (Base 5)</span> verwendet die Ziffern <code>0</code> bis <code>4</code>. Es hat in manchen Kulturen eine Rolle gespielt, weil eine Hand fünf Finger hat.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 27 wird quinär zu <span class="example">102</span> (1·25 + 0·5 + 2 = 27).</p>
-              <p class="dim">Verwendung: Historische Zählsysteme, Spielerei, Basis mancher Kalender- und Münzsysteme.</p>`,
-
-    numsys_6: `<p><span class="term">Senärsystem (Base 6)</span> nutzt die Ziffern <code>0</code> bis <code>5</code>. Es ist mathematisch attraktiv, weil 6 viele Teiler hat (1, 2, 3, 6) – ähnlich wie 12.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 42 wird senär zu <span class="example">110</span> (1·36 + 1·6 + 0 = 42).</p>
-              <p class="dim">Verwendung: Theoretische Spielerei, manche Brettspiele und Würfel-Experimente.</p>`,
-
-    numsys_7: `<p><span class="term">Septenärsystem (Base 7)</span> nutzt die Ziffern <code>0</code> bis <code>6</code>. Die Zahl 7 hat in vielen Kulturen eine symbolische Bedeutung (Wochentage, Regenbogenfarben).</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 100 wird septenär zu <span class="example">202</span> (2·49 + 0·7 + 2 = 100).</p>
-              <p class="dim">Verwendung: Didaktik, Zahlenspielereien, historische Kalenderberechnungen.</p>`,
-
-    numsys_8: `<p><span class="term">Oktalsystem (Base 8)</span> verwendet die Ziffern <code>0</code> bis <code>7</code>. Drei Binärbits entsprechen genau einer Oktalziffer – das macht Oktal zu einer äußerst kompakten Darstellung von Binärdaten.</p>
-              <p><span class="term">Beispiel:</span> Der Byte-Wert 65 wird oktal zu <span class="example">101</span> (1·64 + 0·8 + 1 = 65).</p>
-              <p class="dim">Verwendung: Unix-Dateirechte (<code>chmod 755</code>), historische Systeme, ASCII-Steuerzeichen.</p>`,
-
-    numsys_9: `<p><span class="term">Nonärsystem (Base 9)</span> nutzt die Ziffern <code>0</code> bis <code>8</code>. Es hat keine technische Bedeutung, wird aber gelegentlich für Zahlenspielereien und didaktische Zwecke verwendet.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 80 wird nonär zu <span class="example">88</span> (8·9 + 8 = 80).</p>
-              <p class="dim">Verwendung: Mathematik-Didaktik, Zahlentheorie, Spielerei.</p>`,
-
-    numsys_10: `<p><span class="term">Dezimalsystem (Base 10)</span> ist unser Alltagssystem mit den Ziffern <code>0</code> bis <code>9</code>. Es hat sich durchgesetzt, weil Menschen zehn Finger haben. Jede Stelle hat das Zehnfache an Gewicht wie die Stelle rechts daneben.</p>
-              <p><span class="term">Beispiel:</span> Die Zahl 65 bedeutet: 6·10 + 5·1.</p>
-              <p class="dim">Verwendung: Alltag, Geld, Wissenschaft, Handel, Kommunikation – überall dort, wo Menschen mit Zahlen umgehen.</p>`,
-
-    numsys_11: `<p><span class="term">Undezimalsystem (Base 11)</span> verwendet die Ziffern <code>0</code> bis <code>9</code> und zusätzlich <code>A</code> für den Wert 10. Die Basis 11 ist mathematisch wegen der Primzahleigenschaft interessant.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 22 wird undezimal zu <span class="example">20</span> (2·11 + 0 = 22).</p>
-              <p class="dim">Verwendung: Selten in der Praxis; historisch bei manchen Völkern (Neuguinea, Australien) für Zählsysteme.</p>`,
-
-    numsys_12: `<p><span class="term">Duodezimalsystem (Base 12)</span> nutzt die Ziffern <code>0</code> bis <code>9</code> und <code>A</code>, <code>B</code> für 10 und 11. Die Zahl 12 ist mathematisch sehr gut teilbar (durch 2, 3, 4, 6), was sie für Handel und Zeitmessung attraktiv macht.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 143 wird duodezimal zu <span class="example">BB</span> (11·12 + 11 = 143).</p>
-              <p class="dim">Verwendung: Historische Maßeinheiten (Dutzend, Gros), Zeitmessung (12 Stunden), englische Währungen (Shilling = 12 Pence). Spuren davon im Französischen: <em>quatre-vingts</em> = 80.</p>`,
-
-    numsys_13: `<p><span class="term">Tridezimalsystem (Base 13)</span> verwendet die Ziffern <code>0</code> bis <code>9</code> und <code>A</code>, <code>B</code>, <code>C</code> für 10, 11, 12.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 170 wird tridezimal zu <span class="example">101</span> (1·169 + 0·13 + 1 = 170).</p>
-              <p class="dim">Verwendung: Reine Mathematik, selten didaktisch verwendet.</p>`,
-
-    numsys_14: `<p><span class="term">Tetradezimalsystem (Base 14)</span> nutzt die Ziffern <code>0</code> bis <code>9</code> und <code>A</code> bis <code>D</code> für 10 bis 13.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 200 wird tetradezimal zu <span class="example">104</span> (1·196 + 0·14 + 4 = 200).</p>
-              <p class="dim">Verwendung: Mathematische Übungen, exotische Kodierungen.</p>`,
-
-    numsys_15: `<p><span class="term">Pentadezimalsystem (Base 15)</span> verwendet die Ziffern <code>0</code> bis <code>9</code> und <code>A</code> bis <code>E</code> für 10 bis 14. Es ist eine der Basisgrößen, für die noch ein einheitliches Alphabet definiert ist.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 225 wird pentadezimal zu <span class="example">100</span> (1·225 + 0 + 0).</p>
-              <p class="dim">Verwendung: Mathematische Experimente, didaktische Beispiele.</p>`,
-
-    numsys_16: `<p><span class="term">Hexadezimalsystem (Base 16)</span> nutzt die Ziffern <code>0</code> bis <code>9</code> und die Buchstaben <code>A</code> bis <code>F</code> für die Werte 10 bis 15. Ein Byte (8 Bit) passt genau in <em>zwei</em> Hex-Ziffern – das macht Hexadezimal zur wichtigsten Basis in der Informatik neben dem Binärsystem.</p>
-              <p><span class="term">Beispiel:</span> Der Byte-Wert 255 wird hexadezimal zu <span class="example">FF</span>, der Wert 65 zu <span class="example">41</span>. Der Text <code>"Hi"</code> wird zu <span class="example">48 69</span>.</p>
-              <p class="dim">Verwendung: Speicheradressen, Farbcodes (<code>#FF5733</code>), Hashes (SHA-256, MD5), Debugging, Debugger-Ausgaben.</p>`,
-
-    numsys_17: `<p><span class="term">Heptadezimalsystem (Base 17)</span> nutzt die Ziffern <code>0</code> bis <code>9</code> und <code>A</code> bis <code>G</code> für 10 bis 16. Die Basis 17 ist eine Primzahl, was sie mathematisch reizvoll macht.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 300 wird heptadezimal zu <span class="example">10A</span> (1·289 + 0·17 + 10 = 300).</p>
-              <p class="dim">Verwendung: Theoretische Mathematik, exotische ID-Systeme.</p>`,
-
-    numsys_18: `<p><span class="term">Oktodezimalsystem (Base 18)</span> verwendet die Ziffern <code>0</code> bis <code>9</code> und <code>A</code> bis <code>H</code> für 10 bis 17. Achtzehn ist gut durch 2, 3, 6 und 9 teilbar – ähnlich wie 12 und 24.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 324 wird oktodezimal zu <span class="example">100</span> (1·324).</p>
-              <p class="dim">Verwendung: Historisch bei den Maya; heute reine Didaktik.</p>`,
-
-    numsys_19: `<p><span class="term">Nonadezimalsystem (Base 19)</span> nutzt die Ziffern <code>0</code> bis <code>9</code> und <code>A</code> bis <code>I</code> für 10 bis 18.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 361 wird nonadezimal zu <span class="example">100</span> (1·361).</p>
-              <p class="dim">Verwendung: Mathematische Experimente, historische Zählsysteme.</p>`,
-
-    numsys_20: `<p><span class="term">Vigesimalsystem (Base 20)</span> verwendet die Ziffern <code>0</code> bis <code>9</code> und <code>A</code> bis <code>J</code> für 10 bis 19. Es wurde von den Maya und Kelten verwendet und ist bis heute in einigen Sprachen erhalten.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 400 wird vigesimal zu <span class="example">100</span> (1·400). Die Zahl 80 wird zu <span class="example">40</span> (4·20).</p>
-              <p class="dim">Verwendung: Maya-Kalender, keltische Zählsysteme, Spuren im Französischen (<em>quatre-vingts</em> = 80).</p>`,
-
-    numsys_60: `<p><span class="term">Sexagesimalsystem (Base 60)</span> ist eines der ältesten Zahlensysteme der Welt. Es wurde von den Sumerern und Babyloniern verwendet und hat bis heute überlebt – vor allem in der Zeit- und Winkelmessung.</p>
-              <p>Die Basis 60 ist mathematisch herausragend: Sie hat zwölf Teiler (1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60) und lässt sich dadurch sehr leicht in Brüche zerlegen. Deshalb ist eine Stunde in 60 Minuten und eine Minute in 60 Sekunden unterteilt, und ein Kreis hat 360 Grad.</p>
-              <p><span class="term">Beispiel:</span> Die Dezimalzahl 3600 wird sexagesimal zu <span class="example">100</span> (1·60² + 0·60 + 0).</p>
-              <p class="dim">Verwendung: Zeitmessung (Stunden/Minuten/Sekunden), Winkelmessung (Grad/Minuten/Sekunden), Astronomie.</p>
-              <p class="warn">⚠ Hinweis: Base 60 hat kein standardisiertes Ziffernalphabet. Dieses Werkzeug verwendet die Zeichen <code>0–9, A–Z</code> für die Stellenwerte 0–35 und <code>a–x</code> für 36–59.</p>`,
-
-    // ── Base-Kodierungen ──
-    base32: `<p><span class="term">Base32</span> kodiert Binärdaten in die 32 Zeichen <code>A–Z</code> und <code>2–7</code>. Es vermeidet bewusst <code>0/1/8/9</code>, weil diese mit <code>O/I/B</code> verwechselt werden können. Padding mit <code>=</code>. Definiert in <b>RFC 4648</b>.</p>
-            <p><span class="term">Beispiel:</span> <span class="example">"Hi" → NBUQ====</span></p>
-            <p class="dim">Verwendung: TOTP-Geheimnisse (Google Authenticator), Tor-.onion-Adressen.</p>`,
-
-    base32hex: `<p><span class="term">Base32hex</span> (auch „Extended Hex“) verwendet ein anderes Alphabet als das Standard-Base32: <code>0–9</code> und <code>A–V</code>. Dadurch bleibt die alphabetische Reihenfolge der kodierten Werte erhalten. Definiert in <b>RFC 4648</b>.</p>
-            <p><span class="term">Beispiel:</span> <span class="example">"Hi" → D1JG====</span></p>
-            <p class="dim">Verwendung: Telefonnummern-Kodierung, Sortierung erhaltende ID-Systeme.</p>`,
-
-    base32z: `<p><span class="term">z-base-32</span> ist ein speziell für Menschen optimiertes Base32-Alphabet. Es verwendet nur Kleinbuchstaben und wählt die Zeichen so, dass Verwechslungen minimiert werden (<code>y</code> ähnelt am ehesten einem Vokal, <code>0</code> und <code>l</code> werden vermieden).</p>
-            <p class="dim">Verwendung: Zooko's Triangle, menschenlesbare IDs, Zcash-Adressen (historisch).</p>`,
-
-    base32cr: `<p><span class="term">Crockford Base32</span> ist ein weiteres menschenfreundliches Base32-Alphabet. Es vermeidet <code>I</code>, <code>L</code>, <code>O</code> und <code>U</code> und ist case-insensitiv. Douglas Crockford entwarf es für sprechende und schreibbare Identifikatoren.</p>
-            <p class="dim">Verwendung: Produkt-IDs, sprechende Bezeichner, sprechende Serialnummern.</p>`,
-
-    base45: `<p><span class="term">Base45</span> ist ein kompaktes Verfahren, das einen sehr kleinen Zeichenvorrat verwendet (45 Zeichen: <code>0–9</code>, <code>A–Z</code>, <code>Space</code>, <code>$</code>, <code>%</code>, <code>*</code>, <code>+</code>, <code>-</code>, <code>.</code>, <code>/</code>, <code>:</code>). Es kodiert 2 Bytes in 3 Zeichen. Definiert in <b>RFC 9285</b>.</p>
-            <p class="dim">Verwendung: EU Digital COVID Certificate (COVID-Zertifikat), QR-Codes.</p>`,
-
-    base58btc: `<p><span class="term">Base58 (Bitcoin-Alphabet)</span> verwendet 58 Zeichen und lässt die leicht verwechselbaren <code>0</code>, <code>O</code>, <code>I</code>, <code>l</code> weg. Das Alphabet ist in der Bitcoin-Spezifikation fest definiert.</p>
-            <p><span class="term">Beispiel:</span> <span class="example">Bitcoin-Adressen beginnen mit 1 oder 3.</span></p>
-            <p class="dim">Verwendung: Bitcoin-Adressen, IPFS-Hashes, Blockchain-Keys.</p>`,
-
-    base58fl: `<p><span class="term">Base58 (Flickr-Alphabet)</span> verwendet ebenfalls 58 Zeichen, aber eine andere Reihenfolge als Bitcoin. Flickr nutzte es für kurze URLs zu Fotos.</p>
-            <p class="dim">Verwendung: Flickr-Kurz-URLs (historisch), alternative ID-Systeme.</p>`,
-
-    base64: `<p><span class="term">Base64</span> ist der Industriestandard zur Einbettung von Binärdaten in Text. Es nutzt <code>A–Z</code>, <code>a–z</code>, <code>0–9</code>, <code>+</code>, <code>/</code> und <code>=</code> als Padding. Definiert in <b>RFC 4648</b>. Der Overhead beträgt ca. 33 %.</p>
-            <p><span class="term">Beispiel:</span> <span class="example">"Man" → TWFu</span></p>
-            <p class="dim">Verwendung: E-Mail-Anhänge (MIME), Data-URLs, JWT-Tokens, SSH-Keys.</p>`,
-
-    base64url: `<p><span class="term">Base64url</span> ist eine Variante von Base64, bei der <code>+</code> durch <code>-</code> und <code>/</code> durch <code>_</code> ersetzt wird. Das Padding <code>=</code> wird üblicherweise weggelassen, damit die Kodierung in URLs, Dateinamen und Query-Strings verwendet werden kann. Definiert in <b>RFC 4648</b>.</p>
-            <p class="dim">Verwendung: JWT-Tokens, URL-Parameter, Dateinamen.</p>`,
-
-    base64mime: `<p><span class="term">Base64 MIME</span> ist Base64 mit zusätzlichen Regeln: Die Ausgabe wird in Zeilen von maximal 76 Zeichen umbrochen und verwendet <code>\r\n</code> als Zeilentrenner. Definiert in <b>RFC 2045</b>.</p>
-            <p class="dim">Verwendung: E-Mail-Anhänge (MIME), historische SMTP-Übertragung.</p>`,
-
-    base85: `<p><span class="term">Base85 (Ascii85)</span> nutzt 85 druckbare ASCII-Zeichen und ist damit effizienter als Base64 (nur ca. 25 % Overhead). Es kodiert 4 Bytes in 5 Zeichen. Entwickelt von Adobe für PostScript und PDF.</p>
-            <p class="dim">Verwendung: PDF, PostScript, Git-Binary-Patches.</p>`,
-
-    z85: `<p><span class="term">Z85</span> ist eine ZeroMQ-spezifische Variante von Base85 mit einem eigenen, genau definierten 85-Zeichen-Alphabet. Es ist strenger als Ascii85 und hat keine Sonderfälle.</p>
-            <p class="dim">Verwendung: ZeroMQ-Netzwerkprotokoll, kompakte Binär-Kodierung.</p>`,
-
-    base91: `<p><span class="term">Base91</span> verwendet 91 der 94 druckbaren ASCII-Zeichen und erreicht damit nur ca. 23 % Overhead – noch effizienter als Base85. Es kodiert 13 Bits in 2 Zeichen.</p>
-            <p class="dim">Verwendung: Kompakte Textkodierung in Umgebungen mit begrenztem Zeichenvorrat.</p>`,
-
-    // ── Klassische Chiffren ──
-    affine: `<p><span class="term">Affine Chiffre</span> ist eine mathematische Verallgemeinerung von Cäsar. Formel: <code>E(x) = (a·x + b) mod 26</code>.</p>
-             <p>Wichtig: <code>a</code> muss teilerfremd zu 26 sein (also 1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25), sonst ist die Verschlüsselung nicht eindeutig umkehrbar.</p>
-             <p><span class="term">Beispiel:</span> <span class="example">a=5, b=8: A→I, B→N, C→S</span></p>
-             <p class="dim">Sicherheit: 12 · 26 = 312 Schlüssel – per Brute-Force in Millisekunden gebrochen.</p>`,
-
-    atbash: `<p><span class="term">Atbash</span> ist eine hebräische Ursprungschiffre. Das Alphabet wird gespiegelt: <code>A↔Z</code>, <code>B↔Y</code>, <code>C↔X</code> …</p>
-             <p><span class="term">Beispiel:</span> <span class="example">"Hallo" → "Szool"</span></p>
-             <p class="dim">Sicherheit: Keine – reine Substitution mit festem Muster.</p>`,
-
-    bacon: `<p><span class="term">Bacon-Chiffre</span> (Francis Bacon, 1605) kodiert jeden Buchstaben als 5-Bit-Muster aus <code>a</code>/<code>b</code> (bzw. A/B). Sie war als Steganographie gedacht.</p>
-            <p><span class="term">Beispiel:</span> <span class="example">A = aaaaa, B = aaaab, C = aaaba, …</span></p>
-            <p class="dim">Sicherheit: Sehr gering, aber historisch bedeutsam als frühe binäre Kodierung.</p>`,
-
-    caesar: `<p><span class="term">Cäsar-Chiffre</span> ist eine der ältesten Verschlüsselungen. Jeder Buchstabe wird um eine feste Anzahl (den <em>Shift</em>) im Alphabet verschoben.</p>
-             <p><span class="term">Beispiel:</span> <span class="example">Shift 3: A→D, B→E, C→F, "Hallo" → "Kdoor"</span></p>
-             <p><span class="term">ROT13</span> ist die Variante mit Shift 13 – sie ist selbstinvers, also zweimal anwenden ergibt wieder das Original.</p>
-             <p class="dim">Der Shift ist eine Zahl von 1 bis 25. Groß-/Kleinschreibung wird beibehalten.</p>
-             <p class="dim">Sicherheit: Trivial zu knacken (nur 25 Möglichkeiten). Nur zur Bildung/Spielerei.</p>`,
-
-    morse: `<p><span class="term">Morsecode</span> (Samuel Morse, 1837) ist eine Kodierung für Telegrafie. Jeder Buchstabe wird durch eine Folge aus kurzen (<code>·</code>) und langen (<code>–</code>) Signalen dargestellt. Buchstaben werden durch Leerzeichen getrennt, Wörter durch <code>/</code>.</p>
-            <p><span class="term">Beispiel:</span> <span class="example">SOS = ··· ––– ··· , HALLO = ···· ·– ·–·· ·–·· –––</span></p>
-            <p class="dim">Verwendung: Seefahrt (Notruf), Amateurfunk, Militär – bis heute in Notsituationen.</p>`,
-
-    polybius: `<p><span class="term">Polybius-Quadrat</span> ist ein 5×5-Raster (griechischer Historiker, 2. Jh. v. Chr.). Die 26 Buchstaben werden auf 25 reduziert (I und J teilen sich ein Feld). Jeder Buchstabe wird durch zwei Koordinaten (Zeile, Spalte) dargestellt.</p>
-               <p><span class="term">Beispiel:</span> <span class="example">A=11, B=12, …, E=15, F=21, …</span></p>
-               <p class="dim">Verwendung: Historisch für Feuerzeichen, Basis für ADFGX/ADFGVX (WKI).</p>`,
-
-    railfence: `<p><span class="term">Rail Fence (Zickzack)</span> ist eine Transpositionschiffre. Der Text wird im Zickzack über mehrere Zeilen („Zäune“) geschrieben und dann zeilenweise ausgelesen.</p>
-                <p><span class="term">Beispiel:</span> <span class="example">"HALLO" mit 2 Zäunen: H.L.O / .A.L. → "HLOAL"</span></p>
-                <p class="dim">Sicherheit: Schwach allein, aber gute Grundlage für moderne Transpositionsverfahren.</p>`,
-
-    vigenere: `<p><span class="term">Vigenère</span> ist eine polyalphabetische Chiffre aus dem 16. Jahrhundert. Statt eines festen Shifts wird ein <em>Schlüsselwort</em> verwendet. Jeder Buchstabe des Schlüssels gibt den Shift für den jeweiligen Klartextbuchstaben vor.</p>
-               <p><span class="term">Beispiel:</span> <span class="example">Schlüssel "KEY", Text "HALLO" → H+K, A+E, L+Y, L+K, O+E</span></p>
-               <p class="dim">Nur Buchstaben A–Z werden verschoben. Das Schlüsselwort wird automatisch in Großbuchstaben umgewandelt und auf A–Z reduziert.</p>
-               <p class="dim">Sicherheit: Lange Zeit ungebrochen. Heute per Kasiski-Test und Häufigkeitsanalyse angreifbar, aber gut zum Lernen.</p>`,
-
-    // ── Rotormaschinen ──
-    enigma: `<p><span class="term">Die Enigma</span> ist die bekannteste Rotor-Chiffriermaschine der Geschichte. Sie wurde von der deutschen Wehrmacht im Zweiten Weltkrieg millionenfach eingesetzt und galt lange als unknackbar – bis britische Mathematiker um Alan Turing im Bletchley Park sie mit der „Bombe“ brachen.</p>
-             <p><b>Aufbau und Funktionsweise:</b></p>
-             <ul>
-               <li><b>Drei Walzen (Rotoren):</b> Jede Walze enthält eine feste Buchstabenverdrahtung, die den Eingang auf einen anderen Buchstaben abbildet. Es stehen die Walzen I, II, III, IV und V zur Verfügung. Für jede Position (links, mitte, rechts) können Sie eine eigene Walze wählen.</li>
-               <li><b>Grundstellung:</b> Die Anfangsstellung jeder Walze (jeweils A–Z). Bei jedem Tastendruck dreht sich die rechte Walze weiter; nach einer vollen Umdrehung bewegt sich die mittlere Walze weiter, dann die linke.</li>
-               <li><b>Ringstellung:</b> Ein fester Versatz zwischen Walzenkern und -ring, der die Weiterdrehung und die Verdrahtung verschiebt. Ebenfalls A–Z.</li>
-               <li><b>Steckbrett:</b> Buchstabenpaare (z. B. <code>AB CD EF</code>) werden vor der Verschlüsselung vertauscht – ein zusätzlicher Substitutionsschritt.</li>
-               <li><b>Reflektor (UKW):</b> Am Ende der Walzenkette wird der Buchstabe über einen Reflektor zurück durch die Walzen geschickt. Hierdurch ist die Enigma <em>selbstinvers</em>: Verschlüsseln und Entschlüsseln erfolgen mit derselben Einstellung.</li>
-             </ul>
-             <p><b>Wichtige Konsequenz:</b> Die Enigma verschlüsselt niemals einen Buchstaben zu sich selbst – ein bekannter Angriffspunkt, der Turing und sein Team ausnutzten.</p>
-             <p><b>Wie in diesem Werkzeug verwendet:</b></p>
-             <ul>
-               <li>Wählen Sie drei Walzen, einen Reflektor (B oder C), die Grund- und Ringstellungen sowie optional ein Steckbrett.</li>
-               <li>Der Text wird vor der Verarbeitung in Großbuchstaben umgewandelt; alle Zeichen außer A–Z werden für die Verschlüsselung ignoriert (aber in der Ausgabe zusammenhängend als Großbuchstaben dargestellt – so wie es historisch üblich war).</li>
-               <li><b>Richtung ist bei der Enigma symmetrisch:</b> Dieselbe Konfiguration verschlüsselt und entschlüsselt. Stellen Sie einfach dieselben Walzen, Grundstellungen, Ringstellungen und dasselbe Steckbrett ein und geben Sie den Geheimtext ein.</li>
-             </ul>
-             <p class="warn">⚠ Sicherheit: Die Enigma ist heute <b>nicht mehr sicher</b> – sie lässt sich mit modernen Methoden in Sekunden brechen. Dies ist ein historisches und didaktisches Werkzeug, keine zeitgemäße Verschlüsselung.</p>`,
-
-    // ── Moderne Verfahren ──
-    xorascii: `<p><span class="term">Erweitertes Vigenère (XOR/ASCII)</span> ist die moderne, erweiterte Form des klassischen Vigenère-Verfahrens. Statt nur Buchstaben im Alphabet zu verschieben, wird der <b>ASCII- bzw. Unicode-Wert</b> jedes Zeichens direkt mit dem Passwort per XOR-Bit-Operation verknüpft.</p>
-               <p>Das bedeutet: <b>Alle Zeichen sind erlaubt</b> – Groß- und Kleinschreibung, Ziffern, Sonderzeichen, Umlaute, sogar Emojis. Auch das Passwort darf beliebige Zeichen enthalten.</p>
-               <p><span class="term">Beispiel:</span> <span class="example">'H' (72) XOR 'K' (75) = 3; 'i' (105) XOR 'e' (101) = 12</span></p>
-               <p>Das Ergebnis wird als Hex-Folge ausgegeben, damit auch nicht-druckbare Bytes sicher dargestellt werden können.</p>
-               <p class="dim">Sicherheit: Deutlich besser als Standard-Vigenère, aber bei langen Texten mit bekanntem Klartext angreifbar. Für echte Sicherheit → AES-GCM verwenden.</p>`,
-
-    rot47: `<p><span class="term">ROT47</span> verschiebt alle 94 druckbaren ASCII-Zeichen (Code 33–126) um 47 Positionen. Anders als ROT13 funktioniert es auch für Ziffern und Sonderzeichen.</p>
-            <p><span class="term">Beispiel:</span> <span class="example">'A' (65) → 'p' (112)</span></p>
-            <p class="dim">Sicherheit: Keine – reine Spielerei/Lehrbeispiel. Selbstinvers.</p>`,
-
-    // ── AES-GCM ──
-    aesgcm: `<p><span class="term">AES-256-GCM mit PBKDF2</span> ist der <b>reale Industriestandard</b> für passwortbasierte Verschlüsselung. Dies ist echte Kryptographie – kein Lehrbeispiel.</p>
-             <p><b>Wie es funktioniert (Schritt für Schritt):</b></p>
-             <ul>
-               <li>Ihr Passwort wird zusammen mit einem <b>zufälligen Salt</b> (16 Byte) durch <b>PBKDF2 mit 250.000 Iterationen</b> gejagt. Das ist eine <em>Key Derivation Function</em> – sie macht das Passwort absichtlich langsam, um Brute-Force zu erschweren.</li>
-               <li>Das Ergebnis ist ein <b>256-Bit-Schlüssel</b>, der kryptographisch nicht mehr erratbar ist.</li>
-               <li>Mit diesem Schlüssel wird der Text per <b>AES-256-GCM</b> verschlüsselt. GCM ist ein <em>authentifizierter</em> Modus: Er erkennt jede Manipulation der Daten.</li>
-               <li>Als Ergebnis entsteht ein Paket aus <b>Salt (16 B) + IV (12 B) + Ciphertext + Auth-Tag (16 B)</b>, das Base64-kodiert ausgegeben wird.</li>
-             </ul>
-             <p><b>Unterstützte Zeichen:</b> Jedes beliebige UTF-8-Zeichen der Welt – Deutsch, Arabisch, Chinesisch, Emojis.</p>
-             <p class="warn">⚠ Sicherheit: militärisches Niveau. Ohne das exakte Passwort ist eine Entschlüsselung nach heutigem Stand der Technik praktisch unmöglich. Ein falsches Passwort führt zu einer Fehlermeldung (Auth-Tag schlägt fehl).</p>
-             <p class="dim">Der Salt und der IV sind in der Ausgabe enthalten – Sie müssen sie nicht separat speichern. Einfach das gesamte Base64-Ergebnis weitergeben.</p>`,
-  };
-
-  // ═══════════════════════════════════════════════
-  //  SELECT BEFÜLLEN
-  // ═══════════════════════════════════════════════
-  const groups = {};
-  methods.forEach(m => {
-    if (!groups[m.group]) groups[m.group] = [];
-    groups[m.group].push(m);
-  });
-  const groupOrder = [
+  // Gruppierung & Alphabetische Sortierung
+  const CATEGORY_ORDER = [
     'Zahlensysteme',
     'Base-Kodierungen',
     'Klassische Chiffren',
     'Rotormaschinen',
-    'Moderne Verfahren',
-    'Verschlüsselung (Passwort-basiert)',
+    'Moderne & Perfekte Verfahren'
   ];
-  groupOrder.forEach(gname => {
-    const list = groups[gname];
-    if (!list) return;
-    const og = document.createElement('optgroup');
-    og.label = '── ' + gname + ' ──';
-    list.forEach(m => {
-      const o = document.createElement('option');
-      o.value = m.id;
-      o.textContent = m.name;
-      og.appendChild(o);
-    });
-    methodSel.appendChild(og);
+
+  const grouped = {};
+  RAW_METHODS.forEach(m => {
+    if (!grouped[m.cat]) grouped[m.cat] = [];
+    grouped[m.cat].push(m);
   });
 
-  // ═══════════════════════════════════════════════
-  //  ENIGMA
-  // ═══════════════════════════════════════════════
-  const ENIGMA_ROTORS = {
+  // Alphabetische Sortierung nur für Chiffren & Moderne Verfahren
+  ['Klassische Chiffren', 'Moderne & Perfekte Verfahren'].forEach(cat => {
+    if (grouped[cat]) {
+      grouped[cat].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    }
+  });
+
+  const METHODS = [];
+  CATEGORY_ORDER.forEach(cat => {
+    if (grouped[cat]) METHODS.push(...grouped[cat]);
+  });
+
+  // ═══════════════════════════════════════════════════════
+  //  SYSTEM-DOSSIERS (OHNE PLAKATIVE LABELS)
+  // ═══════════════════════════════════════════════════════
+  const DOSSIERS = {
+    base2: {
+      hist: 'Gottfried Wilhelm Leibniz dokumentierte 1703 das binäre Zahlensystem („Explication de l’Arithmétique Binaire“). Es bildet das fundamentale Rückgrat sämtlicher digitaler Logikgatter und Halbleitertechnologien.',
+      func: 'Stellt Zahlen mit den Ziffern 0 und 1 zur Basis 2 dar. Im mathematischen Modus wird ein dezimaler Zahlenwert umgewandelt; im Byte-Modus wird jedes UTF-8-Zeichen in seine exakte 8-Bit-Repräsentation überführt.',
+      crypto: 'Reine Basistransformation zur Datenrepräsentation auf physikalischen Datenträgern ohne kryptographische Schutzwirkung.',
+      use: 'Maschinensprache, Bitmasken, Netzwerk-Frames, Prozessor-Mikroarchitektur.'
+    },
+    base16: {
+      hist: 'Wurde von IBM 1964 mit dem System/360 etabliert. 16 Zustände lassen sich exakt in 4 Bits (ein Nibble) packen; zwei Hexadezimalziffern bilden genau ein volles Byte (8 Bit).',
+      func: 'Verwendet Ziffern 0–9 und Buchstaben A–F. Jedes Eingangs-Byte wird durch zwei Hex-Zeichen dargestellt.',
+      crypto: 'Dient Menschen als kompakte, fehlerarme Darstellung binärer Datenströme ohne Geheimhaltungsfunktion.',
+      use: 'Speicher-Dumps, Farbwerte im Web (#RRGGBB), Krypto-Schlüssel und Hash-Ausgaben (SHA-256).'
+    },
+    base64: {
+      hist: 'Definiert in RFC 4648. Entwickelt während der Entstehung des Internets, da ältere Übertragungskanäle (wie 7-Bit SMTP-E-Mail) Rohbinärdaten korrumpierten.',
+      func: 'Nimmt je 3 Bytes (24 Bit) und teilt sie in 4 Gruppen zu je 6 Bit auf. Jedes 6-Bit-Paket wird über eine Tabelle aus 64 druckbaren Zeichen (A–Z, a–z, 0–9, +, /) dargestellt. Fehlende Rest-Bytes werden mit „=“ aufgefüllt.',
+      crypto: 'Standardisierte Repräsentation von Binärdaten in ASCII-Systemen. Besitzt keinen Verschlüsselungseffekt.',
+      use: 'E-Mail-Anhänge (MIME), Data-URLs in CSS/HTML, JWT-Tokens, SSH-Key-Dateien.'
+    },
+    base85: {
+      hist: 'Von Paul E. Rutter für btoa entwickelt und durch Adobe 1990 für PostScript Level 2 und das PDF-Format standardisiert.',
+      func: '4 Bytes (32 Bit) werden als Zahl interpretiert und durch 5 Zeichen zur Basis 85 (ASCII 33 bis 117) kodiert. Eine Folge von vier Null-Bytes wird durch das Einzelzeichen „z“ komprimiert.',
+      crypto: 'Effiziente Transportkodierung. Spart gegenüber Base64 ca. 7 % Speicherplatz ein (Overhead nur 25 % statt 33 %).',
+      use: 'PDF-Dokumentstrukturen, PostScript, Git-Binary-Diffs.'
+    },
+    caesar: {
+      hist: 'Von Gaius Julius Caesar im 1. Jh. v. Chr. für militärische Korrespondenz verwendet (beschrieben von Sueton).',
+      func: 'Monoalphabetische Substitution. Jeder Buchstabe wird im Alphabet zyklisch um einen festen Versatz (k) verschoben: C = (P + k) mod 26.',
+      crypto: 'Der Schlüsselraum umfasst lediglich 25 Möglichkeiten. Das Verfahren lässt sich per Brute-Force oder Häufigkeitsanalyse unmittelbar rekonstruieren.',
+      use: 'Didaktik zur Veranschaulichung modularer Arithmetik; ROT13 zur Vermeidung versehentlichen Mitlesens (Spoiler).'
+    },
+    affine: {
+      hist: 'Mathematische Verallgemeinerung der Cäsar-Chiffre durch Einbettung in die lineare Kongruenzrechnung.',
+      func: 'Jeder Buchstabe x wird verschlüsselt durch E(x) = (a·x + b) mod 26. Der Multiplikator a muss zwingend teilerfremd zu 26 sein (ggT(a, 26) = 1), damit ein eindeutiger modularer Kehrwert existiert.',
+      crypto: 'Mit nur 12 möglichen Werten für a und 26 für b existieren lediglich 312 Schlüssel, wodurch eine vollständige Schlüsselsuche in Sekundenbruchteilen erfolgt.',
+      use: 'Einführung in die elementare Zahlentheorie und modulare Inverse.'
+    },
+    vigenere: {
+      hist: '1553 von Giovan Battista Bellaso publiziert, später Blaise de Vigenère zugeschrieben. Galt über 300 Jahre lang als unknackbar („le chiffre indéchiffrable“).',
+      func: 'Polyalphabetische Substitution. Ein Schlüsselwort wird zyklisch wiederholt, wobei jeder Buchstabe des Schlüssels den Cäsar-Shift für das entsprechende Textzeichen bestimmt.',
+      crypto: '1863 von Friedrich Kasiski gelöst. Wiederkehrende Chiffre-Muster erlauben die Ermittlung der Schlüssellänge, woraufhin jeder Teilstrom per Häufigkeitsanalyse gebrochen werden kann.',
+      use: 'Historische Kryptologie und Verständnis polyalphabetischer Verfahren.'
+    },
+    autokey: {
+      hist: '1586 von Blaise de Vigenère erfunden, um die Schwachstelle der zyklischen Schlüsselwiederholung auszumerzen.',
+      func: 'Nach dem initialen Schlüsselwort wird direkt der Klartext selbst als fortlaufender Schlüssel verwendet. Dadurch wiederholt sich der Schlüssel niemals periodisch.',
+      crypto: 'Widersteht dem klassischen Kasiski-Test, ist aber anfällig für statistische Friedman-Tests, da die statistische Struktur der Sprache im Schlüssel erhalten bleibt.',
+      use: 'Historische Brücke zwischen einfacher Polyalphabetik und dynamischen Stromschlüsseln.'
+    },
+    playfair: {
+      hist: '1854 von Charles Wheatstone erfunden, nach Lord Playfair benannt. War die erste praktische Digraphen-Chiffre (eingesetzt von Großbritannien im Ersten Weltkrieg).',
+      func: 'Erzeugt eine 5×5-Buchstabenmatrix über ein Schlüsselwort (I und J teilen sich ein Feld). Der Text wird in Buchstabenpaare zerlegt; diese werden nach geometrischen Regeln (Rechteck, Zeile, Spalte) substituiert.',
+      crypto: 'Verhindert einfache Monogramm-Häufigkeitsanalysen, ist jedoch anfällig für Digramm-Häufigkeitsanalysen typischer Buchstabenpaare.',
+      use: 'Militärgeschichte und Demonstration von N-Gramm-Substitutionen.'
+    },
+    enigma: {
+      hist: '1918 von Arthur Scherbius patentiert und von der Wehrmacht im Zweiten Weltkrieg eingesetzt. Die Entzifferung in Bletchley Park durch Marian Rejewski, Alan Turing und Gordon Welchman beeinflusste den Verlauf des Zweiten Weltkriegs maßgeblich.',
+      func: 'Kombiniert ein Steckbrett, drei austauschbare Walzen mit Ringstellung und einen Reflektor (UKW). Bei jedem Tastendruck dreht sich die rechte Walze; durch Kerben werden Nachbarwalzen weitergeschaltet (inkl. Doppel-Fortschaltung der mittleren Walze). Durch den Reflektor kann kein Buchstabe jemals als er selbst verschlüsselt werden.',
+      crypto: 'Mechanische Konstruktionsmerkmale (Selbstinversionsverbot, feste Umkehrwalze) in Kombination mit strukturellen Bedienfehlern ermöglichten die systematische Rekonstruktion durch Bletchley Park.',
+      use: 'Meilenstein der Kryptologie und historischer Vorläufer der modernen Informatik.'
+    },
+    otp: {
+      hist: '1882 von Frank Miller erfunden, 1917 von Gilbert Vernam und Joseph Mauborgne patentiert. 1949 bewies Claude Shannon die informationstheoretische Unknackbarkeit mathematisch.',
+      func: 'Klartext-Bytes werden per bitweisem XOR mit einem Schlüssel verknüpft, der exakt dieselbe Länge besitzt wie die Nachricht: C = P ⊕ K.',
+      crypto: 'Informationstheoretisch perfekte Sicherheit. Sofern der Schlüssel echt-zufällig ist, exakt der Nachrichtenlänge entspricht, streng geheim bleibt und niemals wiederverwendet wird, existiert kein statistischer oder rechnerischer Angriffsvektor.',
+      use: 'Historische Hochsicherheitsverbindungen (z. B. zwischen Moskau und Washington im Kalten Krieg), Diplomatenkabel.'
+    },
+    aesgcm: {
+      hist: 'AES (Rijndael) wurde 2001 nach einem weltweiten NIST-Wettbewerb standardisiert. GCM (Galois/Counter Mode) ergänzt eine kryptographische Integritätsprüfung.',
+      func: 'Verschlüsselt Daten mit 256 Bit im Zählermodus und generiert mittels Galois-Feld-Multiplikation ein 128-Bit-Authentifizierungs-Tag. Das Passwort wird vorab durch PBKDF2 mit 250.000 SHA-256-Runden und 16 Bytes Salt gegen Wörterbuchangriffe gehärtet.',
+      crypto: 'Aktueller Industriestandard für Hochsicherheitsverschlüsselung. Bietet Vertraulichkeit und erkennt jede Manipulation der Chiffredaten.',
+      use: 'TLS 1.3 (HTTPS), Festplattenverschlüsselung, Signal-Messenger, moderne Regierungskommunikation.'
+    }
+  };
+
+  // Populate Method Select
+  CATEGORY_ORDER.forEach(catName => {
+    const list = grouped[catName];
+    if (!list) return;
+    const og = document.createElement('optgroup');
+    og.label = '── ' + catName.toUpperCase() + ' ──';
+    list.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.name;
+      og.appendChild(opt);
+    });
+    methodSelect.appendChild(og);
+  });
+
+  // ═══════════════════════════════════════════════════════
+  //  ENIGMA HARDWARE SETUP
+  // ═══════════════════════════════════════════════════════
+  const ENIGMA_ROTOR_DEFS = {
     I:   { wiring: 'EKMFLGDQVZNTOWYHXUSPAIBRCJ', notch: 'Q' },
     II:  { wiring: 'AJDKSIRUXBLHWTMCQGZNPYFVOE', notch: 'E' },
     III: { wiring: 'BDFHJLCPRTXVZNYEIWGAKMUSQO', notch: 'V' },
     IV:  { wiring: 'ESOVPZJAYQUIRHXLNFTGKDCMWB', notch: 'J' },
-    V:   { wiring: 'VZBRGITYUPSDNHLXAWMJQOFECK', notch: 'Z' },
+    V:   { wiring: 'VZBRGITYUPSDNHLXAWMJQOFECK', notch: 'Z' }
   };
-  const ENIGMA_REFLECTORS = {
+  const ENIGMA_UKW = {
     B: 'YRUHQSLDPXNGOKMIEBFZCWVJAT',
-    C: 'FVPJIAOYEDRZXWGCTKUQSBNMHL',
+    C: 'FVPJIAOYEDRZXWGCTKUQSBNMHL'
   };
-  const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-  function enigmaProcess(text, cfg) {
-    const r1 = ENIGMA_ROTORS[cfg.rotors[0]];
-    const r2 = ENIGMA_ROTORS[cfg.rotors[1]];
-    const r3 = ENIGMA_ROTORS[cfg.rotors[2]];
-    if (!r1 || !r2 || !r3) throw new Error('Ungültige Walzenauswahl.');
-    const refWiring = ENIGMA_REFLECTORS[cfg.reflector];
-    if (!refWiring) throw new Error('Ungültiger Reflektor.');
+  function initEnigmaUI() {
+    ['enigmaR1','enigmaR2','enigmaR3'].forEach((id, idx) => {
+      const sel = $(id);
+      sel.innerHTML = '';
+      ['I','II','III','IV','V'].forEach(r => {
+        const o = document.createElement('option');
+        o.value = r; o.textContent = 'Walze ' + r;
+        sel.appendChild(o);
+      });
+      sel.value = ['I','II','III'][idx];
+      sel.addEventListener('change', () => enforceUniqueRotors(idx));
+    });
 
-    const wiring = [r1.wiring, r2.wiring, r3.wiring];
-    const notches = [r1.notch, r2.notch, r3.notch];
-
-    const pos = cfg.positions.map(p => ALPHA.indexOf(p));
-    const ring = cfg.rings.map(k => ALPHA.indexOf(k));
-    if (pos.some(p => p < 0)) throw new Error('Ungültige Grundstellung.');
-    if (ring.some(k => k < 0)) throw new Error('Ungültige Ringstellung.');
-
-    const plug = {};
-    for (const pair of cfg.plugboard) {
-      if (!/^[A-Z]{2}$/.test(pair)) continue;
-      const [a, b] = pair.split('');
-      if (plug[a] || plug[b]) throw new Error('Doppeltes Zeichen im Steckbrett: ' + pair);
-      plug[a] = b;
-      plug[b] = a;
-    }
-    function throughPlug(c) { return plug[c] || c; }
-
-    let out = '';
-    for (const ch of text) {
-      if (!/[A-Z]/.test(ch)) continue;
-
-      const p3Before = pos[2];
-      const p2Before = pos[1];
-
-      pos[2] = (pos[2] + 1) % 26;
-      if (ALPHA[p3Before] === notches[2] || ALPHA[p2Before] === notches[1]) {
-        pos[1] = (pos[1] + 1) % 26;
-        if (ALPHA[p2Before] === notches[1]) {
-          pos[0] = (pos[0] + 1) % 26;
-        }
-      }
-
-      let c = throughPlug(ch);
-      for (let i = 2; i >= 0; i--) {
-        const shift = pos[i] - ring[i];
-        const idx = (ALPHA.indexOf(c) + shift + 26) % 26;
-        const mapped = wiring[i][idx];
-        c = ALPHA[(ALPHA.indexOf(mapped) - shift + 26) % 26];
-      }
-      c = refWiring[ALPHA.indexOf(c)];
-      for (let i = 0; i <= 2; i++) {
-        const shift = pos[i] - ring[i];
-        const idx = (ALPHA.indexOf(c) + shift + 26) % 26;
-        const mapped = ALPHA[wiring[i].indexOf(ALPHA[idx])];
-        c = ALPHA[(ALPHA.indexOf(mapped) - shift + 26) % 26];
-      }
-      c = throughPlug(c);
-      out += c;
-    }
-    return out;
-  }
-
-  function readEnigmaConfig() {
-    const rotors = [
-      $('enigmaRotor1').value,
-      $('enigmaRotor2').value,
-      $('enigmaRotor3').value,
-    ];
-    const reflector = $('enigmaReflector').value;
-    const positions = [
-      $('enigmaPos1').value,
-      $('enigmaPos2').value,
-      $('enigmaPos3').value,
-    ];
-    const rings = [
-      $('enigmaRing1').value,
-      $('enigmaRing2').value,
-      $('enigmaRing3').value,
-    ];
-    const plugRaw = $('enigmaPlugboard').value.toUpperCase().replace(/[^A-Z ]/g, ' ');
-    const plugboard = plugRaw.split(/\s+/).filter(Boolean);
-    const set = new Set(rotors);
-    if (set.size !== 3) throw new Error('Walzen dürfen nicht doppelt verwendet werden.');
-    return { rotors, reflector, positions, rings, plugboard };
-  }
-
-  function updateEnigmaStatus() {
-    try {
-      const cfg = readEnigmaConfig();
-      const rotorNames = cfg.rotors.join('-');
-      const posStr = cfg.positions.join('');
-      const ringStr = cfg.rings.join('');
-      const plugStr = cfg.plugboard.length ? cfg.plugboard.join(' ') : 'leer';
-      enigmaStatus.innerHTML = '<span class="key">Aktuelle Konfiguration:</span> ' +
-        'Walzen ' + rotorNames + ', Reflektor ' + cfg.reflector +
-        ', Grundstellung ' + posStr + ', Ringstellung ' + ringStr +
-        ', Steckbrett ' + plugStr + '.';
-    } catch (e) {
-      enigmaStatus.innerHTML = '<span class="key">Aktuelle Konfiguration:</span> ' +
-        '<span style="color: var(--red)">Fehler: ' + e.message + '</span>';
-    }
-  }
-
-  function populateEnigmaSelects() {
     ['enigmaPos1','enigmaPos2','enigmaPos3','enigmaRing1','enigmaRing2','enigmaRing3'].forEach(id => {
       const sel = $(id);
-      for (const ch of ALPHA) {
+      sel.innerHTML = '';
+      for (let i = 0; i < 26; i++) {
         const o = document.createElement('option');
-        o.value = ch;
-        o.textContent = ch;
+        o.value = ALPHABET[i];
+        o.textContent = ALPHABET[i] + ' (' + (i+1).toString().padStart(2,'0') + ')';
         sel.appendChild(o);
       }
       sel.value = 'A';
     });
   }
-  populateEnigmaSelects();
 
-  // ═══════════════════════════════════════════════
-  //  HELPER
-  // ═══════════════════════════════════════════════
-  function currentMethod() {
-    return methods.find(m => m.id === methodSel.value) || null;
-  }
-
-  function setStatus(msg, type) {
-    statusMsg.textContent = msg;
-    statusMsg.className = 'msg' + (type ? ' ' + type : '');
-  }
-
-  function setBusy(on) { busyIndicator.classList.toggle('active', on); }
-
-  function updateMeta() {
-    inputMeta.textContent  = inputText.value.length + ' Zeichen';
-    outputMeta.textContent = outputText.value.length + ' Zeichen';
-  }
-
-  function updateParamField() {
-    const m = currentMethod();
-    if (!m) {
-      paramField.classList.add('hidden');
-      enigmaPanel.classList.remove('active');
-      return;
-    }
-    enigmaPanel.classList.toggle('active', m.id === 'enigma');
-    paramInput.value = '';
-    paramInput.placeholder = '';
-
-    if (!m.param) {
-      paramField.classList.add('hidden');
-      paramField.classList.remove('keyword');
-      return;
-    }
-    paramField.classList.remove('hidden');
-    paramInput.classList.remove('uppercase', 'case-sensitive');
-
-    if (m.param === 'number') {
-      paramField.classList.remove('keyword');
-      if (m.id === 'caesar') {
-        paramLabel.textContent = 'Shift (1–25)';
-        paramInput.type = 'number';
-        paramInput.min = '1'; paramInput.max = '25';
-        paramInput.value = '3';
-      } else if (m.id === 'railfence') {
-        paramLabel.textContent = 'Zaunhöhe (2–10)';
-        paramInput.type = 'number';
-        paramInput.min = '2'; paramInput.max = '10';
-        paramInput.value = '3';
+  function enforceUniqueRotors(changedIndex) {
+    const ids = ['enigmaR1','enigmaR2','enigmaR3'];
+    const current = ids.map(id => $(id).value);
+    const available = ['I','II','III','IV','V'];
+    ids.forEach((id, i) => {
+      if (i !== changedIndex && $(id).value === current[changedIndex]) {
+        const free = available.find(r => !current.includes(r) || r === current[i]);
+        if (free) $(id).value = free;
       }
-    } else if (m.param === 'keyword') {
-      paramField.classList.add('keyword');
-      paramInput.type = 'text';
-      if (m.caseMode === 'upper') {
-        paramInput.classList.add('uppercase');
-        paramLabel.textContent = 'Schlüsselwort (A–Z, wird großgeschrieben)';
-        paramInput.placeholder = 'Schlüsselwort eingeben…';
-      } else {
-        paramInput.classList.add('case-sensitive');
-        paramLabel.textContent = 'Schlüsselwort (alle Zeichen erlaubt)';
-        paramInput.placeholder = 'Schlüsselwort eingeben…';
-      }
-    } else if (m.param === 'affine') {
-      paramField.classList.remove('keyword');
-      paramLabel.textContent = 'Parameter a, b (z.B. a=5, b=8)';
-      paramInput.type = 'text';
-      paramInput.placeholder = 'a,b – z. B. 5,8';
-    } else if (m.param === 'password') {
-      paramField.classList.add('keyword');
-      paramInput.classList.add('case-sensitive');
-      paramLabel.textContent = 'Passwort (beliebige Zeichen)';
-      paramInput.type = 'text';
-      paramInput.placeholder = 'Passwort eingeben…';
-    }
+    });
+    scheduleConvert();
+  }
+  initEnigmaUI();
+
+  // ═══════════════════════════════════════════════════════
+  //  UI CONTROLLER & EVENT LISTENERS
+  // ═══════════════════════════════════════════════════════
+  function currentMethodDef() {
+    return METHODS.find(m => m.id === methodSelect.value) || null;
   }
 
-  function updateInfo() {
-    const m = currentMethod();
+  function updateControlUI() {
+    const m = currentMethodDef();
     if (!m) {
-      infoContent.innerHTML = '<p>Bitte wählen Sie oben ein Verfahren aus. Hier erscheint dann eine ausführliche Beschreibung mit Beispiel und Verwendungshinweisen.</p>';
+      paramFieldWrap.style.display = 'none';
+      numSysModeRow.style.display  = 'none';
+      enigmaConsole.classList.remove('active');
+      morsePlayerBar.classList.remove('active');
       statMethod.textContent = '—';
       return;
     }
-    if (m.id.startsWith('numsys_')) {
-      infoContent.innerHTML = infos[m.id] || infos.numsys_10;
-    } else {
-      infoContent.innerHTML = infos[m.id] || `<p>${m.hint}</p>`;
+
+    paramFieldWrap.style.display = m.param ? 'flex' : 'none';
+    numSysModeRow.style.display  = m.base !== undefined ? 'flex' : 'none';
+    enigmaConsole.classList.toggle('active', m.id === 'enigma');
+    morsePlayerBar.classList.toggle('active', m.id === 'morse');
+
+    togglePwBtn.style.display = m.param === 'password' ? 'inline-flex' : 'none';
+    genOtpBtn.style.display   = m.id === 'otp' ? 'inline-flex' : 'none';
+
+    if (m.param) {
+      paramInput.type = (m.param === 'password') ? 'password' : (m.param === 'number' ? 'number' : 'text');
+      paramLabel.textContent = getParamLabel(m.id);
+      // Neutraler Leerzustand: keine Voreinstellung
+      paramInput.value = '';
     }
+    updateDossier(m);
     statMethod.textContent = m.name;
   }
 
-  // ═══════════════════════════════════════════════
-  //  ALGORITHMEN
-  // ═══════════════════════════════════════════════
-
-  const B60_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwx';
-
-  function getAlphabet(base) {
-    if (base <= 36) return DIGITS.slice(0, base);
-    if (base === 60) return B60_ALPHABET;
-    throw new Error('Basis ' + base + ' wird nicht unterstützt.');
-  }
-
-  function bytesToBaseN(str, base) {
-    const alphabet = getAlphabet(base);
-    const bytes = new TextEncoder().encode(str);
-    return Array.from(bytes).map(b => {
-      let n = b;
-      let out = '';
-      if (n === 0) return alphabet[0];
-      while (n > 0) {
-        out = alphabet[n % base] + out;
-        n = Math.floor(n / base);
-      }
-      if (base === 2) out = out.padStart(8, '0');
-      else if (base === 8) out = out.padStart(3, '0');
-      else if (base === 16) out = out.padStart(2, '0');
-      return out;
-    }).join(' ');
-  }
-
-  function baseNToBytes(str, base) {
-    const alphabet = getAlphabet(base);
-    const lookup = {};
-    for (let i = 0; i < alphabet.length; i++) lookup[alphabet[i]] = i;
-
-    const parts = str.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 0) throw new Error('Keine Daten eingegeben.');
-    const bytes = new Uint8Array(parts.length);
-    for (let i = 0; i < parts.length; i++) {
-      const tok = parts[i];
-      let v = 0;
-      for (const c of tok) {
-        if (!(c in lookup)) {
-          throw new Error(`Ungültiges Zeichen "${c}" für Basis ${base} in Token "${tok}".`);
-        }
-        v = v * base + lookup[c];
-        if (v > 255) {
-          throw new Error(`Wert "${tok}" überschreitet 255 (Byte-Bereich).`);
-        }
-      }
-      bytes[i] = v;
+  function getParamLabel(id) {
+    switch (id) {
+      case 'caesar': return 'Shift-Versatz (1–25)';
+      case 'affine': return 'Parameter a, b (z. B. "5, 8")';
+      case 'railfence': return 'Zaunhöhe (Schienen 2–10)';
+      case 'skytale': return 'Umfang / Bandbreite (Spalten)';
+      case 'vigenere': case 'autokey': return 'Schlüsselwort (Buchstaben)';
+      case 'playfair': case 'bifid': return 'Matrix-Schlüsselwort';
+      case 'otp': return 'Zufallsschlüssel (Gleiche Länge wie Text)';
+      case 'xorascii': return 'Passphrase / XOR-Schlüssel';
+      case 'aesgcm': return 'Passwort zur Verschlüsselung';
+      default: return 'Parameter';
     }
+  }
+
+  function updateDossier(m) {
+    const d = DOSSIERS[m.id] || DOSSIERS[m.base ? 'base16' : 'vigenere'];
+    $('dossierTitle').innerHTML = `▸ SYSTEM-DOSSIER: <span style="color:var(--text);">${m.name.toUpperCase()}</span>`;
+    dossierContent.innerHTML = `
+      <div class="dossier-section">
+        <h4>1. Historischer Hintergrund</h4>
+        <p>${d.hist}</p>
+      </div>
+      <div class="dossier-section">
+        <h4>2. Funktionsweise & mathematischer Ablauf</h4>
+        <p>${d.func}</p>
+      </div>
+      <div class="dossier-section">
+        <h4>3. Kryptographische Eigenschaften & Analyse</h4>
+        <p>${d.crypto}</p>
+      </div>
+      <div class="dossier-section">
+        <h4>4. Praktische Verwendung & Relevanz</h4>
+        <p>${d.use}</p>
+      </div>
+    `;
+  }
+
+  // Direction Switch
+  $('dirSwitch').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    currentDirection = btn.dataset.dir;
+    $('dirSwitch').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    statDirection.textContent = currentDirection.toUpperCase();
+    scheduleConvert();
+  });
+
+  // Number System Switch
+  numSysSwitch.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    numSysMode = btn.dataset.mode;
+    numSysSwitch.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    scheduleConvert();
+  });
+
+  // Password Visibility Toggle
+  togglePwBtn.addEventListener('click', () => {
+    paramInput.type = paramInput.type === 'password' ? 'text' : 'password';
+  });
+
+  // OTP Generator Button
+  genOtpBtn.addEventListener('click', () => {
+    const len = inputText.value.length || 32;
+    const bytes = new Uint8Array(len);
+    crypto.getRandomValues(bytes);
+    paramInput.value = Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join(' ');
+    scheduleConvert();
+  });
+
+  // Method Change
+  methodSelect.addEventListener('change', () => {
+    updateControlUI();
+    scheduleConvert();
+  });
+
+  // Text Inputs
+  inputText.addEventListener('input', () => { updateMeta(); scheduleConvert(); });
+  paramInput.addEventListener('input', scheduleConvert);
+
+  // Enigma Inputs
+  ['enigmaR1','enigmaR2','enigmaR3','enigmaRef','enigmaPos1','enigmaPos2','enigmaPos3','enigmaRing1','enigmaRing2','enigmaRing3','enigmaPlugboard']
+    .forEach(id => {
+      $(id).addEventListener('input', scheduleConvert);
+      $(id).addEventListener('change', scheduleConvert);
+    });
+
+  // Action Buttons
+  $('clearBtn').addEventListener('click', () => {
+    inputText.value = ''; outputText.value = '';
+    updateMeta(); setStatus('Geleert.', 'ok');
+  });
+
+  $('copyInputBtn').addEventListener('click', () => copyToClipboard(inputText.value, 'Eingabe kopiert.'));
+  $('copyOutputBtn').addEventListener('click', () => copyToClipboard(outputText.value, 'Ergebnis kopiert.'));
+
+  $('pasteBtn').addEventListener('click', async () => {
     try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    } catch (e) {
-      throw new Error('Die Byte-Folge ist kein gültiger UTF-8-Text.');
+      const text = await navigator.clipboard.readText();
+      inputText.value = text;
+      updateMeta(); scheduleConvert();
+      setStatus('Aus Zwischenablage eingefügt.', 'ok');
+    } catch {
+      setStatus('Einfügen blockiert. Bitte Strg+V nutzen.', 'error');
+    }
+  });
+
+  $('swapBtn').addEventListener('click', () => {
+    if (!outputText.value) return;
+    inputText.value = outputText.value;
+    currentDirection = currentDirection === 'encode' ? 'decode' : 'encode';
+    $('dirSwitch').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.dir === currentDirection));
+    statDirection.textContent = currentDirection.toUpperCase();
+    updateMeta(); scheduleConvert();
+    setStatus('Ergebnis als Eingabe übernommen.', 'ok');
+  });
+
+  $('downloadBtn').addEventListener('click', () => {
+    if (!outputText.value) return;
+    const blob = new Blob([outputText.value], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `cipherlab_${methodSelect.value || 'export'}_output.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('Datei exportiert.', 'ok');
+  });
+
+  // File Upload
+  $('uploadBtn').addEventListener('click', () => $('fileInput').click());
+  $('fileInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) readFile(file);
+  });
+
+  const dropzone = $('inputDropzone');
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault(); dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]);
+  });
+
+  function readFile(file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      inputText.value = ev.target.result;
+      updateMeta(); scheduleConvert();
+      setStatus(`Datei geladen: ${file.name} (${file.size} Bytes)`, 'ok');
+    };
+    reader.readAsText(file);
+  }
+
+  // Dossier Accordion
+  $('dossierHeader').addEventListener('click', () => {
+    dossierBox.classList.toggle('collapsed');
+    $('dossierHeader').setAttribute('aria-expanded', !dossierBox.classList.contains('collapsed'));
+  });
+  $('dossierHeader').addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      dossierBox.classList.toggle('collapsed');
+    }
+  });
+
+  function copyToClipboard(text, msg) {
+    if (!text) { setStatus('Kein Inhalt zum Kopieren vorhanden.', 'error'); return; }
+    navigator.clipboard.writeText(text).then(() => setStatus(msg, 'ok')).catch(() => setStatus('Kopieren fehlgeschlagen.', 'error'));
+  }
+
+  function setStatus(text, type) {
+    statusMsg.textContent = text;
+    statusMsg.className = 'status-msg ' + (type || '');
+  }
+
+  function updateMeta() {
+    const inBytes = new TextEncoder().encode(inputText.value).length;
+    const outBytes = new TextEncoder().encode(outputText.value).length;
+    inputMeta.textContent = `${inputText.value.length} Zeichen · ${inBytes} B`;
+    outputMeta.textContent = `${outputText.value.length} Zeichen · ${outBytes} B`;
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  ALGORITHMEN IMPLEMENTIERUNG
+  // ═══════════════════════════════════════════════════════
+
+  function bytesToBase64(bytes) {
+    let binary = '';
+    const len = bytes.byteLength;
+    const chunkSize = 0x8000;
+    for (let i = 0; i < len; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)));
+    }
+    return btoa(binary);
+  }
+
+  function base64ToBytes(b64) {
+    const clean = b64.replace(/\s/g, '');
+    if (!clean) return new Uint8Array(0);
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(clean)) {
+      throw new Error('Ungültiges Base64-Format: Nur Zeichen A–Z, a–z, 0–9, +, / und = am Ende erlaubt.');
+    }
+    if (clean.length % 4 !== 0) {
+      throw new Error(`Ungültige Base64-Länge (${clean.length} Zeichen): Die Länge muss ein Vielfaches von 4 sein.`);
+    }
+    let binary;
+    try {
+      binary = atob(clean);
+    } catch {
+      throw new Error('Base64-Dekodierung fehlgeschlagen: Padding oder Datenstruktur ungültig.');
+    }
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  // Verhindert Zeichensalat: Erzwingt echtes UTF-8 und blockiert unlesbare Steuerzeichen
+  function decodeUtf8Strict(bytes) {
+    if (!bytes || bytes.length === 0) return '';
+    let text;
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch {
+      throw new Error('Dekodierung fehlgeschlagen: Die Daten ergeben keinen gültigen UTF-8-Klartext.');
+    }
+    if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(text)) {
+      throw new Error('Dekodierung fehlgeschlagen: Daten enthalten unlesbare Steuerzeichen (kein Klartext).');
+    }
+    return text;
+  }
+
+  // 1. Zahlensysteme
+  const B60_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwx';
+  function getRadixAlphabet(base) {
+    if (base <= 36) return '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0, base);
+    if (base === 60) return B60_ALPHABET;
+    throw new Error('Basis wird nicht unterstützt');
+  }
+
+  function mathConvertNumber(str, base, enc) {
+    const cleaned = str.trim();
+    if (!cleaned) return '';
+    const alpha = getRadixAlphabet(base);
+    if (enc) {
+      if (!/^[0-9]+$/.test(cleaned)) throw new Error('Mathematischer Modus erfordert eine positive Dezimalzahl ohne Buchstaben oder Sonderzeichen.');
+      let n = BigInt(cleaned);
+      if (n === 0n) return '0';
+      let res = '';
+      while (n > 0n) {
+        res = alpha[Number(n % BigInt(base))] + res;
+        n /= BigInt(base);
+      }
+      return res;
+    } else {
+      const upper = base === 60 ? cleaned : cleaned.toUpperCase();
+      let n = 0n;
+      for (const char of upper) {
+        const val = alpha.indexOf(char);
+        if (val === -1) throw new Error(`Ungültige Ziffer '${char}' für Basis ${base}.`);
+        n = n * BigInt(base) + BigInt(val);
+      }
+      return n.toString(10);
     }
   }
 
-  // ─── Base32 (Standard RFC 4648) ───
-  const B32_STD = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  function base32Encode(str, alphabet) {
-    alphabet = alphabet || B32_STD;
-    const bytes = new TextEncoder().encode(str);
-    let bits = 0, value = 0, out = '';
-    for (const b of bytes) {
-      value = (value << 8) | b;
-      bits += 8;
-      while (bits >= 5) { out += alphabet[(value >>> (bits - 5)) & 31]; bits -= 5; }
+  function bytesConvertNumber(str, base, enc) {
+    const alpha = getRadixAlphabet(base);
+    if (enc) {
+      const bytes = new TextEncoder().encode(str);
+      return Array.from(bytes).map(b => {
+        let v = b, res = '';
+        if (v === 0) return alpha[0].padStart(base === 2 ? 8 : (base === 16 ? 2 : 1), alpha[0]);
+        while (v > 0) { res = alpha[v % base] + res; v = Math.floor(v / base); }
+        if (base === 2) res = res.padStart(8, '0');
+        if (base === 16) res = res.padStart(2, '0');
+        return res;
+      }).join(' ');
+    } else {
+      const tokens = str.trim().split(/\s+/).filter(Boolean);
+      const bytes = new Uint8Array(tokens.length);
+      tokens.forEach((tok, i) => {
+        let val = 0;
+        for (const c of tok) {
+          const idx = alpha.indexOf(base === 60 ? c : c.toUpperCase());
+          if (idx === -1) throw new Error(`Ungültiges Zeichen '${c}'`);
+          val = val * base + idx;
+        }
+        if (val > 255) throw new Error(`Byte-Wert über 255: '${tok}'`);
+        bytes[i] = val;
+      });
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
     }
-    if (bits > 0) out += alphabet[(value << (5 - bits)) & 31];
+  }
+
+  // 2. Base32 Varianten
+  const B32_STD = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const B32_HEX = '0123456789ABCDEFGHIJKLMNOPQRSTUV';
+  const B32_CRK = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+  function base32Encode(bytes, alpha) {
+    let bits = 0, val = 0, out = '';
+    for (let i = 0; i < bytes.length; i++) {
+      val = (val << 8) | bytes[i];
+      bits += 8;
+      while (bits >= 5) { out += alpha[(val >>> (bits - 5)) & 31]; bits -= 5; }
+    }
+    if (bits > 0) out += alpha[(val << (5 - bits)) & 31];
     while (out.length % 8) out += '=';
     return out;
   }
-  function base32Decode(str, alphabet) {
-    alphabet = alphabet || B32_STD;
-    const raw = str.toUpperCase().replace(/=+$/,'').replace(/\s/g,'');
-    if (!raw) throw new Error('Keine Daten eingegeben.');
-    const lookup = {};
-    for (let i = 0; i < alphabet.length; i++) lookup[alphabet[i]] = i;
-    let bits = 0, value = 0;
-    const bytes = [];
-    for (const c of raw) {
-      const i = lookup[c];
-      if (i === undefined) throw new Error(`Ungültiges Base32-Zeichen: "${c}".`);
-      value = (value << 5) | i;
+
+  function base32Decode(str, alpha) {
+    const clean = str.toUpperCase().replace(/=+$/,'').replace(/\s/g,'');
+    let bits = 0, val = 0;
+    const out = [];
+    for (const c of clean) {
+      const idx = alpha.indexOf(c);
+      if (idx === -1) throw new Error(`Ungültiges Base32-Zeichen: '${c}'`);
+      val = (val << 5) | idx;
       bits += 5;
-      if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 0xff); bits -= 8; }
+      if (bits >= 8) { out.push((val >>> (bits - 8)) & 0xff); bits -= 8; }
     }
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
-    } catch (e) {
-      throw new Error('Die Base32-Daten sind kein gültiger UTF-8-Text.');
-    }
+    return new Uint8Array(out);
   }
 
-  const B32_HEX = '0123456789ABCDEFGHIJKLMNOPQRSTUV';
-  function base32hexEncode(str) { return base32Encode(str, B32_HEX); }
-  function base32hexDecode(str) { return base32Decode(str, B32_HEX); }
-
-  const ZBASE32 = 'ybndrfg8ejkmcpqxot1uwisza345h769';
-  function zbase32Encode(str) { return base32Encode(str, ZBASE32.toUpperCase()); }
-  function zbase32Decode(str) { return base32Decode(str, ZBASE32.toUpperCase()); }
-
-  const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  function crockfordEncode(str) { return base32Encode(str, CROCKFORD); }
-  function crockfordDecode(str) {
-    let s = str.toUpperCase()
-      .replace(/[IL]/g, '1')
-      .replace(/O/g, '0')
-      .replace(/=+$/,'')
-      .replace(/\s/g,'');
-    return base32Decode(s, CROCKFORD);
-  }
-
-  // ─── Base45 ───
-  const B45_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
-  function base45Encode(str) {
-    const bytes = new TextEncoder().encode(str);
-    let out = '';
+  // 3. Base45 (RFC 9285)
+  const B45_ALPHA = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
+  function base45Encode(bytes) {
+    let res = '';
     for (let i = 0; i < bytes.length; i += 2) {
       if (i + 1 < bytes.length) {
-        const n = bytes[i] * 256 + bytes[i + 1];
-        out += B45_ALPHABET[n % 45];
-        out += B45_ALPHABET[Math.floor(n / 45) % 45];
-        out += B45_ALPHABET[Math.floor(n / 2025)];
+        const n = (bytes[i] << 8) | bytes[i + 1];
+        res += B45_ALPHA[n % 45] + B45_ALPHA[Math.floor(n / 45) % 45] + B45_ALPHA[Math.floor(n / 2025)];
       } else {
         const n = bytes[i];
-        out += B45_ALPHABET[n % 45];
-        out += B45_ALPHABET[Math.floor(n / 45)];
+        res += B45_ALPHA[n % 45] + B45_ALPHA[Math.floor(n / 45)];
       }
     }
-    return out;
+    return res;
   }
   function base45Decode(str) {
     const s = str.replace(/\s/g,'');
-    if (!s) throw new Error('Keine Daten eingegeben.');
-    const lookup = {};
-    for (let i = 0; i < B45_ALPHABET.length; i++) lookup[B45_ALPHABET[i]] = i;
     const bytes = [];
     let i = 0;
     while (i < s.length) {
-      const remaining = s.length - i;
-      if (remaining >= 3) {
-        const c1 = lookup[s[i]], c2 = lookup[s[i+1]], c3 = lookup[s[i+2]];
-        if (c1 === undefined || c2 === undefined || c3 === undefined) {
-          throw new Error('Ungültige Base45-Zeichen in Tripel "' + s.substr(i, 3) + '".');
-        }
+      const rem = s.length - i;
+      if (rem >= 3) {
+        const c1 = B45_ALPHA.indexOf(s[i]), c2 = B45_ALPHA.indexOf(s[i+1]), c3 = B45_ALPHA.indexOf(s[i+2]);
+        if (c1 === -1 || c2 === -1 || c3 === -1) throw new Error('Ungültiges Base45-Zeichen');
         const n = c1 + c2 * 45 + c3 * 2025;
-        if (n > 65535) throw new Error('Base45-Tripel außerhalb des gültigen Bereichs.');
-        bytes.push((n >> 8) & 0xff);
-        bytes.push(n & 0xff);
+        bytes.push((n >> 8) & 0xff, n & 0xff);
         i += 3;
-      } else if (remaining === 2) {
-        const c1 = lookup[s[i]], c2 = lookup[s[i+1]];
-        if (c1 === undefined || c2 === undefined) {
-          throw new Error('Ungültige Base45-Zeichen im Paar "' + s.substr(i, 2) + '".');
-        }
-        const n = c1 + c2 * 45;
-        if (n > 255) throw new Error('Base45-Paar außerhalb des gültigen Bereichs.');
-        bytes.push(n);
+      } else if (rem === 2) {
+        const c1 = B45_ALPHA.indexOf(s[i]), c2 = B45_ALPHA.indexOf(s[i+1]);
+        if (c1 === -1 || c2 === -1) throw new Error('Ungültiges Base45-Zeichen');
+        bytes.push(c1 + c2 * 45);
         i += 2;
       } else {
-        throw new Error('Ungültige Base45-Länge: ' + s.length + ' Zeichen.');
+        throw new Error('Ungültige Base45-Länge');
       }
     }
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
-    } catch (e) {
-      throw new Error('Die Base45-Daten sind kein gültiger UTF-8-Text.');
-    }
+    return new Uint8Array(bytes);
   }
 
-  // ─── Base58 ───
+  // 4. Base58
   const B58_BTC = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  const B58_FLICKR = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
-
-  function base58EncodeWith(str, alphabet) {
-    const bytes = new TextEncoder().encode(str);
-    if (bytes.length === 0) throw new Error('Keine Daten eingegeben.');
+  const B58_FLK = '123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+  function base58Encode(bytes, alpha) {
+    if (!bytes.length) return '';
+    let zeros = 0;
+    while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
     let num = 0n;
-    for (const b of bytes) num = num * 256n + BigInt(b);
-    let out = '';
-    while (num > 0n) { out = alphabet[Number(num % 58n)] + out; num /= 58n; }
-    for (const b of bytes) { if (b === 0) out = alphabet[0] + out; else break; }
-    return out || alphabet[0];
-  }
-  function base58DecodeWith(str, alphabet) {
-    const cleaned = str.replace(/\s/g,'');
-    if (!cleaned) throw new Error('Keine Daten eingegeben.');
-    let num = 0n;
-    for (const c of cleaned) {
-      const i = alphabet.indexOf(c);
-      if (i === -1) throw new Error(`Ungültiges Base58-Zeichen: "${c}".`);
-      num = num * 58n + BigInt(i);
+    for (let i = zeros; i < bytes.length; i++) num = (num << 8n) + BigInt(bytes[i]);
+    let str = '';
+    while (num > 0n) {
+      str = alpha[Number(num % 58n)] + str;
+      num /= 58n;
     }
+    return alpha[0].repeat(zeros) + str;
+  }
+  function base58Decode(str, alpha) {
+    const s = str.replace(/\s/g,'');
+    if (!s.length) return new Uint8Array(0);
+    let zeros = 0;
+    while (zeros < s.length && s[zeros] === alpha[0]) zeros++;
+    let num = 0n;
+    for (let i = zeros; i < s.length; i++) {
+      const idx = alpha.indexOf(s[i]);
+      if (idx === -1) throw new Error(`Ungültiges Base58-Zeichen: '${s[i]}'`);
+      num = num * 58n + BigInt(idx);
+    }
+    const hex = num.toString(16);
+    const hexPadded = hex.length % 2 ? '0' + hex : hex;
     const bytes = [];
-    while (num > 0n) { bytes.unshift(Number(num % 256n)); num /= 256n; }
-    for (const c of cleaned) { if (c === alphabet[0]) bytes.unshift(0); else break; }
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
-    } catch (e) {
-      throw new Error('Die Base58-Daten sind kein gültiger UTF-8-Text.');
+    for (let i = 0; i < zeros; i++) bytes.push(0);
+    if (num > 0n) {
+      for (let i = 0; i < hexPadded.length; i += 2) bytes.push(parseInt(hexPadded.substr(i,2), 16));
     }
-  }
-  function base58btcEncode(str) { return base58EncodeWith(str, B58_BTC); }
-  function base58btcDecode(str) { return base58DecodeWith(str, B58_BTC); }
-  function base58flEncode(str)  { return base58EncodeWith(str, B58_FLICKR); }
-  function base58flDecode(str)  { return base58DecodeWith(str, B58_FLICKR); }
-
-  // ─── Base64 ───
-  function base64Encode(str) {
-    const bytes = new TextEncoder().encode(str);
-    let bin = '';
-    bytes.forEach(b => bin += String.fromCharCode(b));
-    return btoa(bin);
-  }
-  function base64Decode(str) {
-    const cleaned = str.replace(/\s/g,'');
-    if (!cleaned) throw new Error('Keine Daten eingegeben.');
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned)) {
-      throw new Error('Ungültiges Base64-Format. Erlaubt: A–Z, a–z, 0–9, +, / und = am Ende.');
-    }
-    let bin;
-    try { bin = atob(cleaned); }
-    catch (e) { throw new Error('Ungültige Base64-Eingabe (Länge oder Padding fehlerhaft).'); }
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    } catch (e) {
-      throw new Error('Die Base64-Daten sind kein gültiger UTF-8-Text.');
-    }
+    return new Uint8Array(bytes);
   }
 
-  function base64UrlEncode(str) {
-    return base64Encode(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  }
-  function base64UrlDecode(str) {
-    const cleaned = str.replace(/\s/g,'');
-    if (!cleaned) throw new Error('Keine Daten eingegeben.');
-    if (!/^[A-Za-z0-9\-_]*$/.test(cleaned)) {
-      throw new Error('Ungültiges Base64-URL-Format. Erlaubt: A–Z, a–z, 0–9, -, _.');
-    }
-    let s = cleaned.replace(/-/g,'+').replace(/_/g,'/');
-    while (s.length % 4) s += '=';
-    return base64Decode(s);
-  }
-
-  function base64MimeEncode(str) {
-    const b64 = base64Encode(str);
-    const chunks = [];
-    for (let i = 0; i < b64.length; i += 76) {
-      chunks.push(b64.slice(i, i + 76));
-    }
-    return chunks.join('\n');
-  }
-  function base64MimeDecode(str) {
-    return base64Decode(str.replace(/\s/g,''));
-  }
-
-  // ─── Base85 / Ascii85 ───
-  function base85Encode(str) {
-    const bytes = new TextEncoder().encode(str);
-    let out = '';
+  // 5. Ascii85 (Base85)
+  function base85Encode(bytes) {
+    let out = '<~';
     for (let i = 0; i < bytes.length; i += 4) {
-      const chunk = bytes.slice(i, i+4);
+      const chunk = bytes.slice(i, i + 4);
       const pad = 4 - chunk.length;
-      const padded = new Uint8Array([...chunk, ...new Array(pad).fill(0)]);
       let num = 0;
-      for (const b of padded) num = num * 256 + b;
-      const enc = [];
-      for (let j = 0; j < 5; j++) { enc.unshift(String.fromCharCode((num % 85) + 33)); num = Math.floor(num / 85); }
-      out += enc.join('');
+      for (let j = 0; j < chunk.length; j++) num = (num << 8) | chunk[j];
+      num <<= (pad * 8);
+
+      if (pad === 0 && num === 0) {
+        out += 'z';
+      } else {
+        const enc = [];
+        for (let j = 0; j < 5; j++) {
+          enc.unshift(String.fromCharCode((num % 85) + 33));
+          num = Math.floor(num / 85);
+        }
+        out += enc.slice(0, 5 - pad).join('');
+      }
     }
-    return out;
-  }
-  function base85Decode(str) {
-    const clean = str.replace(/\s/g,'');
-    if (!clean) throw new Error('Keine Daten eingegeben.');
-    for (const c of clean) {
-      const code = c.charCodeAt(0);
-      if (code < 33 || code > 117) throw new Error(`Ungültiges Base85-Zeichen: "${c}" (Code ${code}).`);
-    }
-    const bytes = [];
-    for (let i = 0; i < clean.length; i += 5) {
-      const chunk = clean.slice(i, i+5);
-      const pad = 5 - chunk.length;
-      let num = 0;
-      for (const c of chunk) num = num * 85 + (c.charCodeAt(0) - 33);
-      for (let j = 0; j < pad; j++) num = num * 85 + 84;
-      const block = [];
-      for (let j = 0; j < 4; j++) { block.unshift(num & 0xff); num >>>= 8; }
-      bytes.push(...block.slice(0, 4 - pad));
-    }
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
-    } catch (e) {
-      throw new Error('Die Base85-Daten sind kein gültiger UTF-8-Text.');
-    }
+    return out + '~>';
   }
 
-  // ─── Z85 ───
-  const Z85_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#';
-  function z85Encode(str) {
-    const bytes = new TextEncoder().encode(str);
+  function base85Decode(str) {
+    let s = str.trim();
+    if (s.startsWith('<~')) s = s.slice(2);
+    if (s.endsWith('~>')) s = s.slice(0, -2);
+    s = s.replace(/\s/g, '');
+
+    const bytes = [];
+    let i = 0;
+    while (i < s.length) {
+      if (s[i] === 'z') {
+        bytes.push(0, 0, 0, 0);
+        i++;
+        continue;
+      }
+      let chunk = s.slice(i, i + 5);
+      const pad = 5 - chunk.length;
+      while (chunk.length < 5) chunk += 'u';
+
+      let num = 0;
+      for (let j = 0; j < 5; j++) {
+        const code = chunk.charCodeAt(j) - 33;
+        if (code < 0 || code > 84) throw new Error(`Ungültiges Base85-Zeichen: '${chunk[j]}'`);
+        num = num * 85 + code;
+      }
+      const b = [(num >>> 24) & 0xff, (num >>> 16) & 0xff, (num >>> 8) & 0xff, num & 0xff];
+      for (let j = 0; j < 4 - pad; j++) bytes.push(b[j]);
+      i += (5 - pad);
+    }
+    return new Uint8Array(bytes);
+  }
+
+  // 6. Z85 (ZeroMQ)
+  const Z85_ALPHA = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#';
+  function z85Encode(bytes) {
+    const pad = (4 - (bytes.length % 4)) % 4;
+    const padded = new Uint8Array(bytes.length + pad);
+    padded.set(bytes);
     let out = '';
-    const fullBlocks = Math.floor(bytes.length / 4);
-    const remainder = bytes.length % 4;
-    for (let i = 0; i < fullBlocks * 4; i += 4) {
-      let num = 0;
-      for (let j = 0; j < 4; j++) num = num * 256 + bytes[i + j];
-      const enc = [];
-      for (let j = 0; j < 5; j++) { enc.unshift(Z85_ALPHABET[num % 85]); num = Math.floor(num / 85); }
-      out += enc.join('');
+    for (let i = 0; i < padded.length; i += 4) {
+      let num = (padded[i]<<24) | (padded[i+1]<<16) | (padded[i+2]<<8) | padded[i+3];
+      num = num >>> 0;
+      const b = [];
+      for (let j = 0; j < 5; j++) { b.unshift(Z85_ALPHA[num % 85]); num = Math.floor(num / 85); }
+      out += b.join('');
     }
-    if (remainder > 0) {
-      let num = 0;
-      for (let j = 0; j < remainder; j++) num = num * 256 + bytes[fullBlocks * 4 + j];
-      for (let j = remainder; j < 4; j++) num = num * 256;
-      const enc = [];
-      for (let j = 0; j < 5; j++) { enc.unshift(Z85_ALPHABET[num % 85]); num = Math.floor(num / 85); }
-      out += enc.join('');
-    }
-    return out;
+    return (pad > 0 ? `PAD${pad}:` : '') + out;
   }
   function z85Decode(str) {
-    const s = str.replace(/\s/g,'');
-    if (!s) throw new Error('Keine Daten eingegeben.');
-    const lookup = {};
-    for (let i = 0; i < Z85_ALPHABET.length; i++) lookup[Z85_ALPHABET[i]] = i;
-    if (s.length % 5 !== 0) throw new Error('Z85-Länge muss ein Vielfaches von 5 sein.');
+    let s = str.trim().replace(/\s/g,'');
+    let pad = 0;
+    if (s.startsWith('PAD')) {
+      pad = parseInt(s[3], 10) || 0;
+      s = s.slice(5);
+    }
+    if (s.length % 5 !== 0) throw new Error('Z85 Länge muss Vielfaches von 5 sein');
     const bytes = [];
     for (let i = 0; i < s.length; i += 5) {
       let num = 0;
       for (let j = 0; j < 5; j++) {
-        const c = s[i + j];
-        const v = lookup[c];
-        if (v === undefined) throw new Error(`Ungültiges Z85-Zeichen: "${c}".`);
-        num = num * 85 + v;
+        const idx = Z85_ALPHA.indexOf(s[i + j]);
+        if (idx === -1) throw new Error(`Ungültiges Z85-Zeichen: '${s[i+j]}'`);
+        num = num * 85 + idx;
       }
-      const block = [];
-      for (let j = 0; j < 4; j++) {
-        block.unshift(num & 0xff);
-        num >>>= 8;
-      }
-      bytes.push(...block);
+      bytes.push((num >>> 24) & 0xff, (num >>> 16) & 0xff, (num >>> 8) & 0xff, num & 0xff);
     }
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
-    } catch (e) {
-      throw new Error('Die Z85-Daten sind kein gültiger UTF-8-Text.');
-    }
+    return new Uint8Array(bytes.slice(0, bytes.length - pad));
   }
 
-  // ─── Base91 ───
-  const B91_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"';
-  function base91Encode(str) {
-    const bytes = new TextEncoder().encode(str);
-    let out = '';
-    let b = 0, n = 0;
+  // 7. Base91
+  const B91_ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"';
+  function base91Encode(bytes) {
+    let out = '', queue = 0, nbits = 0;
     for (let i = 0; i < bytes.length; i++) {
-      b |= bytes[i] << n;
-      n += 8;
-      if (n > 13) {
-        let v = b & 8191;
-        if (v > 88) {
-          b >>= 13;
-          n -= 13;
-        } else {
-          v = b & 16383;
-          b >>= 14;
-          n -= 14;
-        }
-        out += B91_ALPHABET[v % 91];
-        out += B91_ALPHABET[Math.floor(v / 91)];
+      queue |= bytes[i] << nbits;
+      nbits += 8;
+      if (nbits > 13) {
+        let v = queue & 8191;
+        if (v > 88) { queue >>= 13; nbits -= 13; }
+        else { v = queue & 16383; queue >>= 14; nbits -= 14; }
+        out += B91_ALPHA[v % 91] + B91_ALPHA[Math.floor(v / 91)];
       }
     }
-    if (n) {
-      out += B91_ALPHABET[b % 91];
-      if (n > 7 || b > 90) out += B91_ALPHABET[Math.floor(b / 91)];
+    if (nbits > 0) {
+      out += B91_ALPHA[queue % 91];
+      if (nbits > 7 || queue > 90) out += B91_ALPHA[Math.floor(queue / 91)];
     }
     return out;
   }
   function base91Decode(str) {
     const s = str.replace(/\s/g,'');
-    if (!s) throw new Error('Keine Daten eingegeben.');
-    const lookup = {};
-    for (let i = 0; i < B91_ALPHABET.length; i++) lookup[B91_ALPHABET[i]] = i;
     const bytes = [];
-    let b = 0, n = 0, v = -1;
+    let queue = 0, nbits = 0, val = -1;
     for (const c of s) {
-      const d = lookup[c];
-      if (d === undefined) throw new Error(`Ungültiges Base91-Zeichen: "${c}".`);
-      if (v < 0) {
-        v = d;
-      } else {
-        v += d * 91;
-        b |= v << n;
-        n += (v & 8191) > 88 ? 13 : 14;
-        while (n > 7) {
-          bytes.push(b & 0xff);
-          b >>= 8;
-          n -= 8;
-        }
-        v = -1;
+      const idx = B91_ALPHA.indexOf(c);
+      if (idx === -1) throw new Error(`Ungültiges Base91-Zeichen: '${c}'`);
+      if (val < 0) { val = idx; }
+      else {
+        val += idx * 91;
+        queue |= val << nbits;
+        nbits += (val & 8191) > 88 ? 13 : 14;
+        while (nbits > 7) { bytes.push(queue & 0xff); queue >>= 8; nbits -= 8; }
+        val = -1;
       }
     }
-    if (v >= 0) {
-      b |= v << n;
-      bytes.push(b & 0xff);
-    }
-    try {
-      return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes));
-    } catch (e) {
-      throw new Error('Die Base91-Daten sind kein gültiger UTF-8-Text.');
-    }
+    if (val >= 0) bytes.push((queue | (val << nbits)) & 0xff);
+    return new Uint8Array(bytes);
   }
 
-  // ─── Cäsar ───
-  function caesar(str, shift) {
+  // 8. Klassische Chiffren
+  function caesarCipher(str, shift) {
+    const s = ((shift % 26) + 26) % 26;
     return str.replace(/[a-zA-Z]/g, c => {
       const base = c <= 'Z' ? 65 : 97;
-      return String.fromCharCode(((c.charCodeAt(0) - base + shift) % 26 + 26) % 26 + base);
+      return String.fromCharCode(((c.charCodeAt(0) - base + s) % 26) + base);
     });
   }
 
-  // ─── Atbash ───
-  function atbash(str) {
-    return str.replace(/[a-zA-Z]/g, c => {
-      const base = c <= 'Z' ? 65 : 97;
-      return String.fromCharCode(base + 25 - (c.charCodeAt(0) - base));
-    });
-  }
-
-  // ─── Vigenère ───
-  function vigenere(str, key, encode) {
-    const k = key.toUpperCase().replace(/[^A-Z]/g,'');
-    if (!k) throw new Error('Schlüsselwort muss mindestens einen Buchstaben A–Z enthalten.');
-    let ki = 0;
-    return str.replace(/[a-zA-Z]/g, c => {
-      const base = c <= 'Z' ? 65 : 97;
-      const sh = k.charCodeAt(ki % k.length) - 65;
-      ki++;
-      const s = encode ? sh : (26 - sh) % 26;
-      return String.fromCharCode(((c.charCodeAt(0) - base + s) % 26 + 26) % 26 + base);
-    });
-  }
-
-  // ─── XOR-ASCII ───
-  function xorAsciiCipher(str, key, encode) {
-    if (!key) throw new Error('Passwort erforderlich.');
-    const keyBytes = new TextEncoder().encode(key);
-    if (encode) {
-      const textBytes = new TextEncoder().encode(str);
-      const out = new Uint8Array(textBytes.length);
-      for (let i = 0; i < textBytes.length; i++) {
-        out[i] = textBytes[i] ^ keyBytes[i % keyBytes.length];
-      }
-      return Array.from(out).map(b => b.toString(16).padStart(2,'0')).join(' ');
-    } else {
-      const parts = str.trim().split(/\s+/).filter(Boolean);
-      if (parts.length === 0) throw new Error('Keine Daten eingegeben.');
-      const bytes = new Uint8Array(parts.length);
-      for (let i = 0; i < parts.length; i++) {
-        const tok = parts[i];
-        if (!/^[0-9A-Fa-f]{1,2}$/.test(tok)) {
-          throw new Error(`Ungültiges Hex-Byte: "${tok}". Erwartet 1–2 Hex-Zeichen.`);
-        }
-        bytes[i] = parseInt(tok, 16);
-      }
-      const out = new Uint8Array(bytes.length);
-      for (let i = 0; i < bytes.length; i++) out[i] = bytes[i] ^ keyBytes[i % keyBytes.length];
-      try {
-        return new TextDecoder('utf-8', { fatal: true }).decode(out);
-      } catch (e) {
-        throw new Error('Falsches Passwort oder beschädigte Daten (kein gültiger UTF-8-Text).');
-      }
-    }
-  }
-
-  // ─── AES-GCM + PBKDF2 ───
-  const PBKDF2_ITER = 250000;
-  const SALT_LEN = 16;
-  const IV_LEN = 12;
-
-  async function deriveAesKey(password, salt) {
-    const pwBytes = new TextEncoder().encode(password);
-    const baseKey = await crypto.subtle.importKey(
-      'raw', pwBytes, { name: 'PBKDF2' }, false, ['deriveKey']
-    );
-    return crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt, iterations: PBKDF2_ITER, hash: 'SHA-256' },
-      baseKey,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt']
-    );
-  }
-
-  async function aesGcmEncrypt(plaintext, password) {
-    if (!password) throw new Error('Passwort erforderlich.');
-    const salt = crypto.getRandomValues(new Uint8Array(SALT_LEN));
-    const iv   = crypto.getRandomValues(new Uint8Array(IV_LEN));
-    const key  = await deriveAesKey(password, salt);
-    const data = new TextEncoder().encode(plaintext);
-    const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
-    const cipher = new Uint8Array(cipherBuf);
-    const combined = new Uint8Array(SALT_LEN + IV_LEN + cipher.length);
-    combined.set(salt, 0);
-    combined.set(iv, SALT_LEN);
-    combined.set(cipher, SALT_LEN + IV_LEN);
-    let bin = '';
-    for (const b of combined) bin += String.fromCharCode(b);
-    return btoa(bin);
-  }
-
-  async function aesGcmDecrypt(b64, password) {
-    if (!password) throw new Error('Passwort erforderlich.');
-    const cleaned = b64.replace(/\s/g,'');
-    if (!cleaned) throw new Error('Keine Daten eingegeben.');
-    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned)) {
-      throw new Error('Ungültiges Base64-Format.');
-    }
-    let combined;
-    try {
-      const bin = atob(cleaned);
-      combined = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) combined[i] = bin.charCodeAt(i);
-    } catch (e) {
-      throw new Error('Ungültige Base64-Eingabe.');
-    }
-    if (combined.length < SALT_LEN + IV_LEN + 16) {
-      throw new Error('Daten zu kurz – vermutlich beschädigt oder kein AES-GCM-Paket.');
-    }
-    const salt = combined.slice(0, SALT_LEN);
-    const iv   = combined.slice(SALT_LEN, SALT_LEN + IV_LEN);
-    const cipher = combined.slice(SALT_LEN + IV_LEN);
-    const key = await deriveAesKey(password, salt);
-    try {
-      const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
-      return new TextDecoder().decode(plainBuf);
-    } catch (e) {
-      throw new Error('Entschlüsselung fehlgeschlagen – falsches Passwort oder manipulierte Daten.');
-    }
-  }
-
-  // ─── Affine ───
   function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
-  function affineEncrypt(str, a, b) {
-    if (gcd(a, 26) !== 1) throw new Error('a muss teilerfremd zu 26 sein (1,3,5,7,9,11,15,17,19,21,23,25).');
+  function modInverse(a, m) {
+    a = ((a % m) + m) % m;
+    for (let x = 1; x < m; x++) if ((a * x) % m === 1) return x;
+    return 1;
+  }
+
+  function affineCipher(str, a, b, enc) {
+    if (gcd(a, 26) !== 1) throw new Error("Parameter 'a' muss teilerfremd zu 26 sein (z. B. 1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25)");
+    const aInv = modInverse(a, 26);
     return str.replace(/[a-zA-Z]/g, c => {
       const base = c <= 'Z' ? 65 : 97;
       const x = c.charCodeAt(0) - base;
-      return String.fromCharCode(((a * x + b) % 26 + 26) % 26 + base);
-    });
-  }
-  function affineDecrypt(str, a, b) {
-    let aInv = -1;
-    for (let i = 1; i < 26; i++) if ((a * i) % 26 === 1) { aInv = i; break; }
-    if (aInv === -1) throw new Error('a ist nicht teilerfremd zu 26.');
-    return str.replace(/[a-zA-Z]/g, c => {
-      const base = c <= 'Z' ? 65 : 97;
-      const y = c.charCodeAt(0) - base;
-      return String.fromCharCode(((aInv * (y - b + 26)) % 26 + 26) % 26 + base);
+      const res = enc ? (a * x + b) % 26 : (aInv * (x - b + 2600)) % 26;
+      return String.fromCharCode(((res % 26) + 26) % 26 + base);
     });
   }
 
-  // ─── Rail Fence ───
-  function railFence(str, rails, encode) {
-    if (rails < 2) throw new Error('Zaunhöhe mindestens 2.');
-    if (encode) {
+  function vigenereCipher(str, key, enc, isAutokey = false) {
+    const k = key.toUpperCase().replace(/[^A-Z]/g,'');
+    if (!k) throw new Error('Schlüsselwort muss mindestens einen Buchstaben A–Z enthalten.');
+    let fullKey = k;
+    let out = '', ki = 0;
+    for (let i = 0; i < str.length; i++) {
+      const c = str[i];
+      if (/[a-zA-Z]/.test(c)) {
+        const base = c <= 'Z' ? 65 : 97;
+        const pVal = c.charCodeAt(0) - base;
+        const kVal = fullKey.charCodeAt(ki) - 65;
+        const shift = enc ? kVal : (26 - kVal) % 26;
+        const cVal = (pVal + shift) % 26;
+        out += String.fromCharCode(cVal + base);
+
+        if (isAutokey) {
+          fullKey += enc ? String.fromCharCode(pVal + 65) : String.fromCharCode(cVal + 65);
+        }
+        ki++;
+      } else {
+        out += c;
+      }
+    }
+    return out;
+  }
+
+  function playfairCipher(str, key, enc) {
+    const kClean = (key + 'ABCDEFGHIKLMNOPQRSTUVWXYZ').toUpperCase().replace(/J/g, 'I').replace(/[^A-Z]/g, '');
+    if (!key.trim()) throw new Error('Playfair erfordert ein Schlüsselwort.');
+    const matrix = Array.from(new Set(kClean)).slice(0, 25);
+    const getPos = c => {
+      const idx = matrix.indexOf(c);
+      return [Math.floor(idx / 5), idx % 5];
+    };
+
+    if (enc) {
+      let raw = str.toUpperCase().replace(/J/g, 'I').replace(/[^A-Z]/g, '');
+      let pairs = [];
+      for (let i = 0; i < raw.length; i++) {
+        let a = raw[i];
+        let b = raw[i+1];
+        if (!b) { pairs.push([a, 'X']); break; }
+        if (a === b) { pairs.push([a, 'X']); }
+        else { pairs.push([a, b]); i++; }
+      }
+      return pairs.map(([a, b]) => {
+        let [r1, c1] = getPos(a), [r2, c2] = getPos(b);
+        if (r1 === r2) return matrix[r1 * 5 + (c1 + 1) % 5] + matrix[r2 * 5 + (c2 + 1) % 5];
+        if (c1 === c2) return matrix[((r1 + 1) % 5) * 5 + c1] + matrix[((r2 + 1) % 5) * 5 + c2];
+        return matrix[r1 * 5 + c2] + matrix[r2 * 5 + c1];
+      }).join(' ');
+    } else {
+      const clean = str.toUpperCase().replace(/[^A-Z]/g, '');
+      let out = '';
+      for (let i = 0; i < clean.length; i += 2) {
+        let a = clean[i], b = clean[i+1] || 'X';
+        let [r1, c1] = getPos(a), [r2, c2] = getPos(b);
+        if (r1 === r2) out += matrix[r1 * 5 + (c1 + 4) % 5] + matrix[r2 * 5 + (c2 + 4) % 5];
+        else if (c1 === c2) out += matrix[((r1 + 4) % 5) * 5 + c1] + matrix[((r2 + 4) % 5) * 5 + c2];
+        else out += matrix[r1 * 5 + c2] + matrix[r2 * 5 + c1];
+      }
+      return out;
+    }
+  }
+
+  function skytaleCipher(str, diameter, enc) {
+    if (isNaN(diameter) || diameter < 2) throw new Error('Skytale-Durchmesser muss mindestens 2 betragen.');
+    const len = str.length;
+    if (enc) {
+      let out = '';
+      for (let c = 0; c < diameter; c++) {
+        for (let i = c; i < len; i += diameter) out += str[i];
+      }
+      return out;
+    } else {
+      const rows = Math.ceil(len / diameter);
+      const fullCols = len % diameter || diameter;
+      const grid = Array.from({length: rows}, () => new Array(diameter).fill(null));
+      let idx = 0;
+      for (let c = 0; c < diameter; c++) {
+        const colLen = (c < fullCols || fullCols === diameter) ? rows : rows - 1;
+        for (let r = 0; r < colLen; r++) {
+          if (idx < len) grid[r][c] = str[idx++];
+        }
+      }
+      return grid.flat().filter(c => c !== null).join('');
+    }
+  }
+
+  function railFenceCipher(str, rails, enc) {
+    if (isNaN(rails) || rails < 2) throw new Error('Zaunhöhe muss mindestens 2 betragen.');
+    if (enc) {
       const fence = Array.from({length: rails}, () => []);
-      let rail = 0, dir = 1;
+      let r = 0, d = 1;
       for (const ch of str) {
-        fence[rail].push(ch);
-        rail += dir;
-        if (rail === 0 || rail === rails - 1) dir *= -1;
+        fence[r].push(ch);
+        r += d;
+        if (r === 0 || r === rails - 1) d *= -1;
       }
       return fence.flat().join('');
     } else {
-      const n = str.length;
       const pattern = [];
-      let rail = 0, dir = 1;
-      for (let i = 0; i < n; i++) {
-        pattern.push(rail);
-        rail += dir;
-        if (rail === 0 || rail === rails - 1) dir *= -1;
+      let r = 0, d = 1;
+      for (let i = 0; i < str.length; i++) {
+        pattern.push(r);
+        r += d;
+        if (r === 0 || r === rails - 1) d *= -1;
       }
       const counts = new Array(rails).fill(0);
-      pattern.forEach(r => counts[r]++);
+      pattern.forEach(p => counts[p]++);
       const chunks = [];
-      let idx = 0;
-      for (let r = 0; r < rails; r++) {
-        chunks.push(str.slice(idx, idx + counts[r]).split(''));
-        idx += counts[r];
+      let pos = 0;
+      for (let i = 0; i < rails; i++) {
+        chunks.push(str.slice(pos, pos + counts[i]).split(''));
+        pos += counts[i];
       }
-      const railIdx = new Array(rails).fill(0);
-      return pattern.map(r => chunks[r][railIdx[r]++]).join('');
+      const pIdx = new Array(rails).fill(0);
+      return pattern.map(p => chunks[p][pIdx[p]++]).join('');
     }
   }
 
-  // ─── Polybius ───
-  const POLYBIUS = (() => {
-    const alpha = 'ABCDEFGHIKLMNOPQRSTUVWXYZ';
-    const map = {};
-    let i = 0;
-    for (let r = 1; r <= 5; r++) for (let c = 1; c <= 5; c++) map[alpha[i++]] = '' + r + c;
-    return map;
-  })();
-  function polybiusEncode(str) {
-    return str.toUpperCase().replace(/J/g,'I').split('').map(c =>
-      POLYBIUS[c] || (/\s/.test(c) ? '/' : c)
-    ).join(' ');
-  }
-  function polybiusDecode(str) {
-    const rev = {}; for (const [k,v] of Object.entries(POLYBIUS)) rev[v] = k;
-    const tokens = str.trim().split(/\s+/).filter(Boolean);
-    if (tokens.length === 0) throw new Error('Keine Daten eingegeben.');
-    return tokens.map(tok => {
-      if (tok === '/') return ' ';
-      if (!/^[1-5]{2}$/.test(tok)) throw new Error(`Ungültiges Polybius-Token: "${tok}". Erwartet zwei Ziffern 1–5.`);
-      return rev[tok] || '?';
-    }).join('');
-  }
-
-  // ─── Bacon ───
-  const BACON = (() => {
-    const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const map = {};
-    alpha.split('').forEach((c, i) => {
-      map[c] = i.toString(2).padStart(5, '0').replace(/0/g,'a').replace(/1/g,'b');
-    });
-    return map;
-  })();
-  function baconEncode(str) {
-    const clean = str.toUpperCase().replace(/[^A-Z]/g,'');
-    if (!clean) throw new Error('Bacon-Chiffre benötigt mindestens einen Buchstaben A–Z.');
-    return clean.split('').map(c => BACON[c]).join(' ');
-  }
-  function baconDecode(str) {
-    const rev = {}; for (const [k,v] of Object.entries(BACON)) rev[v] = k;
-    const tokens = str.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    if (tokens.length === 0) throw new Error('Keine Daten eingegeben.');
-    return tokens.map(t => {
-      if (!/^[ab]{5}$/.test(t)) throw new Error(`Ungültiges Bacon-Token: "${t}". Erwartet fünf Zeichen a oder b.`);
-      return rev[t] || '?';
-    }).join('');
-  }
-
-  // ─── Morse ───
-  const MORSE = {
+  // 9. Morsecode
+  const MORSE_MAP = {
     A:'.-', B:'-...', C:'-.-.', D:'-..', E:'.', F:'..-.', G:'--.', H:'....',
     I:'..', J:'.---', K:'-.-', L:'.-..', M:'--', N:'-.', O:'---', P:'.--.',
     Q:'--.-', R:'.-.', S:'...', T:'-', U:'..-', V:'...-', W:'.--', X:'-..-',
-    Y:'-.--', Z:'--..',
-    '0':'-----','1':'.----','2':'..---','3':'...--','4':'....-','5':'.....',
-    '6':'-....','7':'--...','8':'---..','9':'----.',
-    '.':'.-.-.-', ',':'--..--', '?':'..--..', "'":'.----.', '!':'-.-.--',
-    '/':'-..-.', '(':'-.--.', ')':'-.--.-', '&':'.-...', ':':'---...',
-    ';':'-.-.-.', '=':'-...-', '+':'.-.-.', '-':'-....-', '_':'..--.-',
-    '"':'.-..-.', '$':'...-..-', '@':'.--.-.'
+    Y:'-.--', Z:'--..', '0':'-----', '1':'.----', '2':'..---', '3':'...--',
+    '4':'....-', '5':'.....', '6':'-....', '7':'--...', '8':'---..', '9':'----.',
+    '.':'.-.-.-', ',':'--..--', '?':'..--..', '/':'-..-.', '-':'-....-', ':':'---...',
+    '(':'-.--.', ')':'-.--.-', '@':'.--.-.', '=':'-...-', '+': '.-.-.', '!':'-.-.--'
   };
-  const MORSE_REV = {}; for (const [k,v] of Object.entries(MORSE)) MORSE_REV[v] = k;
+  const REV_MORSE = {};
+  for (const [k, v] of Object.entries(MORSE_MAP)) REV_MORSE[v] = k;
+
   function morseEncode(str) {
-    const upper = str.toUpperCase();
-    let hasContent = false;
-    const tokens = [];
-    for (const c of upper) {
-      if (c === ' ') { tokens.push('/'); continue; }
-      if (MORSE[c]) { tokens.push(MORSE[c]); hasContent = true; }
-    }
-    if (!hasContent) throw new Error('Morsecode benötigt mindestens ein bekanntes Zeichen (A–Z, 0–9, übliche Satzzeichen).');
-    return tokens.join(' ');
+    return str.toUpperCase().split('').map(c => {
+      if (c === ' ') return '/';
+      if (!MORSE_MAP[c]) throw new Error(`Zeichen '${c}' kann nicht in Morsecode kodiert werden.`);
+      return MORSE_MAP[c];
+    }).join(' ');
   }
+
   function morseDecode(str) {
-    const tokens = str.trim().split(/\s+/).filter(Boolean);
-    if (tokens.length === 0) throw new Error('Keine Daten eingegeben.');
-    return tokens.map(tok => {
+    const norm = str.replace(/[·•]/g, '.').replace(/[–—_−]/g, '-');
+    return norm.trim().split(/\s+/).map(tok => {
       if (tok === '/') return ' ';
-      if (!/^[.\-]+$/.test(tok)) throw new Error(`Ungültiges Morse-Token: "${tok}". Nur . und - erlaubt.`);
-      const c = MORSE_REV[tok];
-      if (!c) throw new Error(`Unbekanntes Morse-Zeichen: "${tok}".`);
-      return c;
+      if (!REV_MORSE[tok]) throw new Error(`Ungültige Morse-Sequenz '${tok}'.`);
+      return REV_MORSE[tok];
     }).join('');
   }
 
-  // ─── ROT47 ───
-  function rot47(str) {
-    return str.split('').map(c => {
-      const code = c.charCodeAt(0);
-      if (code >= 33 && code <= 126) return String.fromCharCode(33 + ((code - 33 + 47) % 94));
-      return c;
-    }).join('');
+  // 10. Enigma Simulation (M3)
+  function runEnigma(str) {
+    const r1Id = $('enigmaR1').value;
+    const r2Id = $('enigmaR2').value;
+    const r3Id = $('enigmaR3').value;
+    const refKey = $('enigmaRef').value;
+
+    const r1 = ENIGMA_ROTOR_DEFS[r1Id];
+    const r2 = ENIGMA_ROTOR_DEFS[r2Id];
+    const r3 = ENIGMA_ROTOR_DEFS[r3Id];
+    const ref = ENIGMA_UKW[refKey];
+
+    const pos = [$('enigmaPos1').value, $('enigmaPos2').value, $('enigmaPos3').value].map(c => ALPHABET.indexOf(c));
+    const rings = [$('enigmaRing1').value, $('enigmaRing2').value, $('enigmaRing3').value].map(c => ALPHABET.indexOf(c));
+
+    const plugPairs = $('enigmaPlugboard').value.toUpperCase().replace(/[^A-Z ]/g,'').trim().split(/\s+/);
+    const plug = {};
+    plugPairs.forEach(pair => {
+      if (pair.length === 2) {
+        plug[pair[0]] = pair[1];
+        plug[pair[1]] = pair[0];
+      }
+    });
+
+    let out = '';
+    const clean = str.toUpperCase().replace(/[^A-Z]/g,'');
+
+    for (const ch of clean) {
+      const n2 = ALPHABET.indexOf(r2.notch);
+      const n3 = ALPHABET.indexOf(r3.notch);
+
+      if (pos[1] === n2) {
+        pos[0] = (pos[0] + 1) % 26;
+        pos[1] = (pos[1] + 1) % 26;
+      } else if (pos[2] === n3) {
+        pos[1] = (pos[1] + 1) % 26;
+      }
+      pos[2] = (pos[2] + 1) % 26;
+
+      let c = plug[ch] || ch;
+
+      for (let i = 2; i >= 0; i--) {
+        const rotor = [r1, r2, r3][i];
+        const offset = (pos[i] - rings[i] + 26) % 26;
+        const entry = (ALPHABET.indexOf(c) + offset) % 26;
+        const exit = ALPHABET.indexOf(rotor.wiring[entry]);
+        c = ALPHABET[(exit - offset + 26) % 26];
+      }
+
+      c = ref[ALPHABET.indexOf(c)];
+
+      for (let i = 0; i <= 2; i++) {
+        const rotor = [r1, r2, r3][i];
+        const offset = (pos[i] - rings[i] + 26) % 26;
+        const entry = (ALPHABET.indexOf(c) + offset) % 26;
+        const exit = rotor.wiring.indexOf(ALPHABET[entry]);
+        c = ALPHABET[(exit - offset + 26) % 26];
+      }
+
+      c = plug[c] || c;
+      out += c;
+    }
+
+    $('enigmaLivePositions').textContent = `Endstand: ${ALPHABET[pos[0]]} - ${ALPHABET[pos[1]]} - ${ALPHABET[pos[2]]}`;
+    return out.match(/.{1,5}/g)?.join(' ') || out;
   }
 
-  // ═══════════════════════════════════════════════
-  //  DISPATCHER
-  // ═══════════════════════════════════════════════
-  let convertToken = 0;
+  // 11. One-Time Pad (OTP)
+  function otpCipher(str, keyStr, enc) {
+    if (!keyStr.trim()) throw new Error('One-Time Pad erfordert einen Schlüssel gleicher Länge!');
+    const textBytes = enc ? new TextEncoder().encode(str) : parseHexOrBytes(str);
+    const keyBytes = parseHexOrBytes(keyStr);
+    if (keyBytes.length < textBytes.length) {
+      throw new Error(`OTP-Schlüssel zu kurz! Text: ${textBytes.length} Bytes, Schlüssel: ${keyBytes.length} Bytes`);
+    }
+    const out = new Uint8Array(textBytes.length);
+    for (let i = 0; i < textBytes.length; i++) out[i] = textBytes[i] ^ keyBytes[i];
+    return enc ? Array.from(out).map(b => b.toString(16).padStart(2,'0')).join(' ') : new TextDecoder().decode(out);
+  }
 
-  async function convert() {
-    try {
-      await convertInner();
-    } catch (e) {
-      console.error('Unerwarteter Fehler in convert():', e);
-      outputText.value = '';
-      outputText.classList.add('error');
-      setStatus('Unerwarteter Fehler: ' + e.message, 'error');
-      setBusy(false);
+  function parseHexOrBytes(s) {
+    const clean = s.trim();
+    if (/^[0-9a-fA-F\s]+$/.test(clean) && clean.includes(' ')) {
+      return new Uint8Array(clean.split(/\s+/).map(h => parseInt(h, 16)));
+    }
+    return new TextEncoder().encode(s);
+  }
+
+  // 12. AES-256-GCM + PBKDF2
+  async function aesGcmProcess(text, password, enc) {
+    if (!password) throw new Error('AES-256-GCM benötigt eine Passphrase!');
+    const pwBytes = new TextEncoder().encode(password);
+    const baseKey = await crypto.subtle.importKey('raw', pwBytes, 'PBKDF2', false, ['deriveKey']);
+
+    if (enc) {
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' },
+        baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt']
+      );
+      const encBuf = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv }, key, new TextEncoder().encode(text)
+      );
+      const cipherBytes = new Uint8Array(encBuf);
+      const combined = new Uint8Array(salt.length + iv.length + cipherBytes.length);
+      combined.set(salt, 0);
+      combined.set(iv, 16);
+      combined.set(cipherBytes, 28);
+      return bytesToBase64(combined);
+    } else {
+      const combined = base64ToBytes(text);
+      if (combined.length < 28) throw new Error('Ungültiges Datenpaket (zu kurz für Salt + IV)');
+      const salt = combined.slice(0, 16);
+      const iv = combined.slice(16, 28);
+      const cipherBytes = combined.slice(28);
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' },
+        baseKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+      );
+      const decBuf = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv }, key, cipherBytes
+      );
+      return new TextDecoder().decode(decBuf);
     }
   }
 
-  async function convertInner() {
-    const token = ++convertToken;
+  // ═══════════════════════════════════════════════════════
+  //  CENTRAL DISPATCHER
+  // ═══════════════════════════════════════════════════════
+  async function runConversion() {
+    const token = ++convertCounter;
+    const m = currentMethodDef();
     const text = inputText.value;
-    const m = currentMethod();
-    const enc = direction === 'encode';
+    const enc = currentDirection === 'encode';
 
-    // Kein Verfahren ausgewählt
     if (!m) {
       outputText.value = '';
       outputText.classList.remove('error');
+      setStatus('Bereit. Bitte Verfahren auswählen.', 'ok');
       updateMeta();
       return;
-    }
-
-    let enigmaCfg = null;
-    if (m.id === 'enigma') {
-      try { enigmaCfg = readEnigmaConfig(); }
-      catch (e) {
-        outputText.value = '';
-        outputText.classList.add('error');
-        setStatus('Fehler: ' + e.message, 'error');
-        updateMeta();
-        return;
-      }
     }
 
     if (!text) {
       outputText.value = '';
       outputText.classList.remove('error');
-      setStatus('Bereit.', '');
+      setStatus('Bereit.', 'ok');
       updateMeta();
       return;
     }
 
-    let result = '';
     try {
-      if (m.id === 'aesgcm') {
-        setBusy(true);
-        if (enc) {
-          result = await aesGcmEncrypt(text, paramInput.value);
-        } else {
-          result = await aesGcmDecrypt(text, paramInput.value);
+      let result = '';
+
+      if (m.base !== undefined) {
+        result = numSysMode === 'math'
+          ? mathConvertNumber(text, m.base, enc)
+          : bytesConvertNumber(text, m.base, enc);
+      } else if (m.id === 'aesgcm') {
+        setStatus('Berechne PBKDF2 & AES-256-GCM…', '');
+        result = await aesGcmProcess(text, paramInput.value, enc);
+      } else if (m.id === 'otp') {
+        result = otpCipher(text, paramInput.value, enc);
+      } else if (m.id === 'enigma') {
+        result = runEnigma(text);
+      } else if (m.id.startsWith('base')) {
+        const textBytes = new TextEncoder().encode(text);
+        switch (m.id) {
+          case 'base32':    result = enc ? base32Encode(textBytes, B32_STD) : decodeUtf8Strict(base32Decode(text, B32_STD)); break;
+          case 'base32hex': result = enc ? base32Encode(textBytes, B32_HEX) : decodeUtf8Strict(base32Decode(text, B32_HEX)); break;
+          case 'base32cr':  result = enc ? base32Encode(textBytes, B32_CRK) : decodeUtf8Strict(base32Decode(text, B32_CRK)); break;
+          case 'base45':    result = enc ? base45Encode(textBytes)          : decodeUtf8Strict(base45Decode(text)); break;
+          case 'base58btc': result = enc ? base58Encode(textBytes, B58_BTC): decodeUtf8Strict(base58Decode(text, B58_BTC)); break;
+          case 'base58fl':  result = enc ? base58Encode(textBytes, B58_FLK): decodeUtf8Strict(base58Decode(text, B58_FLK)); break;
+          case 'base64':    result = enc ? bytesToBase64(textBytes)         : decodeUtf8Strict(base64ToBytes(text)); break;
+          case 'base64url':
+            if (enc) {
+              result = bytesToBase64(textBytes).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+            } else {
+              const clean = text.replace(/\s/g, '');
+              if (!/^[A-Za-z0-9\-_]+={0,2}$/.test(clean)) {
+                throw new Error('Ungültiges Base64URL-Format: Nur Zeichen A–Z, a–z, 0–9, - und _ erlaubt.');
+              }
+              let b64 = clean.replace(/-/g,'+').replace(/_/g,'/');
+              while (b64.length % 4 !== 0) b64 += '=';
+              result = decodeUtf8Strict(base64ToBytes(b64));
+            }
+            break;
+          case 'base64mime':
+            result = enc ? (bytesToBase64(textBytes).match(/.{1,76}/g)?.join('\n') || '')
+                         : decodeUtf8Strict(base64ToBytes(text.replace(/\s/g,'')));
+            break;
+          case 'base85': result = enc ? base85Encode(textBytes) : decodeUtf8Strict(base85Decode(text)); break;
+          case 'z85':    result = enc ? z85Encode(textBytes)    : decodeUtf8Strict(z85Decode(text)); break;
+          case 'base91': result = enc ? base91Encode(textBytes) : decodeUtf8Strict(base91Decode(text)); break;
         }
-        if (token !== convertToken) { setBusy(false); return; }
-        setBusy(false);
-      } else if (m.id.startsWith('numsys_')) {
-        const base = m.baseInfo.base;
-        result = enc ? bytesToBaseN(text, base) : baseNToBytes(text, base);
       } else {
         switch (m.id) {
-          // ── Base-Kodierungen ──
-          case 'base32':     result = enc ? base32Encode(text)     : base32Decode(text);     break;
-          case 'base32hex':  result = enc ? base32hexEncode(text)  : base32hexDecode(text);  break;
-          case 'base32z':    result = enc ? zbase32Encode(text)    : zbase32Decode(text);    break;
-          case 'base32cr':   result = enc ? crockfordEncode(text)  : crockfordDecode(text);  break;
-          case 'base45':     result = enc ? base45Encode(text)     : base45Decode(text);     break;
-          case 'base58btc':  result = enc ? base58btcEncode(text)  : base58btcDecode(text);  break;
-          case 'base58fl':   result = enc ? base58flEncode(text)   : base58flDecode(text);   break;
-          case 'base64':     result = enc ? base64Encode(text)     : base64Decode(text);     break;
-          case 'base64url':  result = enc ? base64UrlEncode(text)  : base64UrlDecode(text);  break;
-          case 'base64mime': result = enc ? base64MimeEncode(text) : base64MimeDecode(text); break;
-          case 'base85':     result = enc ? base85Encode(text)     : base85Decode(text);     break;
-          case 'z85':        result = enc ? z85Encode(text)        : z85Decode(text);        break;
-          case 'base91':     result = enc ? base91Encode(text)     : base91Decode(text);     break;
-
-          // ── Klassische Chiffren ──
-          case 'affine': {
-            const parts = paramInput.value.split(',').map(s => parseInt(s.trim(), 10));
-            if (parts.length !== 2 || parts.some(isNaN)) throw new Error('Parameter-Format: "a,b" (z. B. "5,8").');
-            const [a, b] = parts;
-            result = enc ? affineEncrypt(text, a, b) : affineDecrypt(text, a, b);
-            break;
-          }
-          case 'atbash':    result = atbash(text); break;
-          case 'bacon':     result = enc ? baconEncode(text)    : baconDecode(text);    break;
           case 'caesar': {
+            if (!paramInput.value.trim()) throw new Error('Bitte einen Shift-Versatz eingeben (1–25).');
             const sh = parseInt(paramInput.value, 10);
-            if (isNaN(sh) || sh < 1 || sh > 25) throw new Error('Shift muss eine ganze Zahl zwischen 1 und 25 sein.');
-            result = caesar(text, enc ? sh : 26 - sh);
+            if (isNaN(sh)) throw new Error('Shift muss eine Zahl sein.');
+            result = caesarCipher(text, enc ? sh : 26 - sh);
             break;
           }
-          case 'morse':     result = enc ? morseEncode(text)    : morseDecode(text);    break;
-          case 'polybius':  result = enc ? polybiusEncode(text) : polybiusDecode(text); break;
-          case 'railfence': {
-            const r = parseInt(paramInput.value, 10);
-            if (isNaN(r) || r < 2 || r > 10) throw new Error('Zaunhöhe muss zwischen 2 und 10 liegen.');
-            result = railFence(text, r, enc);
+          case 'rot13': result = caesarCipher(text, 13); break;
+          case 'rot47': {
+            result = text.split('').map(c => {
+              const code = c.charCodeAt(0);
+              return (code >= 33 && code <= 126) ? String.fromCharCode(33 + ((code - 33 + 47) % 94)) : c;
+            }).join('');
             break;
           }
-          case 'vigenere':  result = vigenere(text, paramInput.value, enc); break;
-
-          // ── Rotormaschinen ──
-          case 'enigma': {
-            result = enigmaProcess(text.toUpperCase().replace(/[^A-Z]/g, ''), enigmaCfg);
-            if (!result) throw new Error('Keine gültigen Buchstaben A–Z in der Eingabe gefunden.');
+          case 'atbash': {
+            result = text.replace(/[a-zA-Z]/g, c => {
+              const b = c <= 'Z' ? 65 : 97;
+              return String.fromCharCode(b + 25 - (c.charCodeAt(0) - b));
+            });
             break;
           }
-
-          // ── Moderne Verfahren ──
-          case 'xorascii': result = xorAsciiCipher(text, paramInput.value, enc); break;
-          case 'rot47':    result = rot47(text); break;
-
-          default: result = '';
+          case 'affine': {
+            if (!paramInput.value.trim()) throw new Error("Bitte Parameter 'a, b' eingeben (z. B. 5, 8).");
+            const parts = paramInput.value.split(',').map(s => parseInt(s.trim(), 10));
+            if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) throw new Error("Format 'a, b' erforderlich (z. B. 5, 8).");
+            result = affineCipher(text, parts[0], parts[1], enc);
+            break;
+          }
+          case 'vigenere':
+            if (!paramInput.value.trim()) throw new Error('Bitte ein Schlüsselwort eingeben.');
+            result = vigenereCipher(text, paramInput.value, enc, false);
+            break;
+          case 'autokey':
+            if (!paramInput.value.trim()) throw new Error('Bitte ein Schlüsselwort eingeben.');
+            result = vigenereCipher(text, paramInput.value, enc, true);
+            break;
+          case 'playfair':
+            result = playfairCipher(text, paramInput.value, enc);
+            break;
+          case 'skytale':
+            result = skytaleCipher(text, parseInt(paramInput.value, 10), enc);
+            break;
+          case 'railfence':
+            result = railFenceCipher(text, parseInt(paramInput.value, 10), enc);
+            break;
+          case 'morse':
+            result = enc ? morseEncode(text) : morseDecode(text);
+            break;
+          case 'xorascii': {
+            if (!paramInput.value) throw new Error('Bitte eine Passphrase eingeben.');
+            const kBytes = new TextEncoder().encode(paramInput.value);
+            const inBytes = enc ? new TextEncoder().encode(text) : parseHexOrBytes(text);
+            const out = new Uint8Array(inBytes.length);
+            for (let i = 0; i < inBytes.length; i++) out[i] = inBytes[i] ^ kBytes[i % kBytes.length];
+            result = enc ? Array.from(out).map(b => b.toString(16).padStart(2,'0')).join(' ') : new TextDecoder().decode(out);
+            break;
+          }
+          case 'bifid': {
+            if (!paramInput.value.trim()) throw new Error('Bitte ein Matrix-Schlüsselwort eingeben.');
+            const kClean = (paramInput.value + 'ABCDEFGHIKLMNOPQRSTUVWXYZ').toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+            const poly = Array.from(new Set(kClean)).slice(0, 25);
+            const clean = text.toUpperCase().replace(/J/g,'I').replace(/[^A-Z]/g,'');
+            if (!clean) throw new Error('Keine Buchstaben A–Z in der Eingabe.');
+            if (enc) {
+              const rows = [], cols = [];
+              for (const ch of clean) {
+                const idx = poly.indexOf(ch);
+                rows.push(Math.floor(idx / 5));
+                cols.push(idx % 5);
+              }
+              const combined = rows.concat(cols);
+              result = '';
+              for (let i = 0; i < combined.length; i += 2) {
+                result += poly[combined[i] * 5 + combined[i+1]];
+              }
+            } else {
+              const coords = [];
+              for (const ch of clean) {
+                const idx = poly.indexOf(ch);
+                coords.push(Math.floor(idx / 5), idx % 5);
+              }
+              const half = coords.length / 2;
+              const rows = coords.slice(0, half), cols = coords.slice(half);
+              result = '';
+              for (let i = 0; i < half; i++) result += poly[rows[i] * 5 + cols[i]];
+            }
+            break;
+          }
+          case 'polybius': {
+            const poly = 'ABCDEFGHIKLMNOPQRSTUVWXYZ';
+            if (enc) {
+              result = text.toUpperCase().replace(/J/g,'I').split('').map(c => {
+                if (c === ' ') return '/';
+                const idx = poly.indexOf(c);
+                if (idx === -1) throw new Error(`Ungültiges Zeichen für Polybius: '${c}'. Nur A–Z erlaubt.`);
+                return `${Math.floor(idx/5)+1}${idx%5+1}`;
+              }).join(' ');
+            } else {
+              const tokens = text.trim().split(/\s+/);
+              result = tokens.map(tok => {
+                if (tok === '/') return ' ';
+                if (!/^[1-5]{2}$/.test(tok)) throw new Error(`Ungültiges Polybius-Token '${tok}'. Erwartet werden Koordinatenpaare 11–55.`);
+                const r = parseInt(tok[0],10)-1, c = parseInt(tok[1],10)-1;
+                return poly[r*5 + c];
+              }).join('');
+            }
+            break;
+          }
+          case 'bacon': {
+            if (enc) {
+              result = text.toUpperCase().split('').map(c => {
+                if (c === ' ') return '/';
+                if (c < 'A' || c > 'Z') throw new Error(`Ungültiges Zeichen für Bacon-Chiffre: '${c}'. Nur Buchstaben A–Z erlaubt.`);
+                const bin = (c.charCodeAt(0) - 65).toString(2).padStart(5, '0');
+                return bin.replace(/0/g, 'a').replace(/1/g, 'b');
+              }).join(' ');
+            } else {
+              result = text.trim().split(/\s+/).map(tok => {
+                if (tok === '/') return ' ';
+                if (!/^[ab]{5}$/i.test(tok)) throw new Error(`Ungültiges Bacon-Token '${tok}'. Erwartet wird ein 5-Bit-Muster aus 'a' und 'b'.`);
+                const bin = tok.toLowerCase().replace(/a/g,'0').replace(/b/g,'1');
+                return String.fromCharCode(parseInt(bin, 2) + 65);
+              }).join('');
+            }
+            break;
+          }
         }
       }
 
-      if (token !== convertToken) return;
+      if (token !== convertCounter) return;
       outputText.value = result;
       outputText.classList.remove('error');
-      setStatus('OK · ' + m.name + (enc ? ' → codiert' : ' → decodiert'), 'ok');
-    } catch (e) {
-      if (token !== convertToken) return;
+      setStatus(`Erfolgreich verarbeitet (${m.name})`, 'ok');
+    } catch (err) {
+      if (token !== convertCounter) return;
       outputText.value = '';
       outputText.classList.add('error');
-      setStatus('Fehler: ' + e.message, 'error');
-      setBusy(false);
+      setStatus('Fehler: ' + err.message, 'error');
     }
     updateMeta();
   }
 
   function scheduleConvert() {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    const m = currentMethod();
-    const delay = m && m.id === 'aesgcm' ? 350 : 40;
-    debounceTimer = setTimeout(convert, delay);
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runConversion, 60);
   }
 
-  // ═══════════════════════════════════════════════
-  //  EVENTS
-  // ═══════════════════════════════════════════════
-  inputText.addEventListener('input', () => { updateMeta(); scheduleConvert(); });
-  paramInput.addEventListener('input', scheduleConvert);
+  // ═══════════════════════════════════════════════════════
+  //  AUDIO SYNTHESIZER (MORSECODE)
+  // ═══════════════════════════════════════════════════════
+  let audioCtx = null;
+  let isPlayingAudio = false;
+  let audioStopFlag = false;
 
-  methodSel.addEventListener('change', () => {
-    updateParamField();
-    updateInfo();
-    const m = currentMethod();
-    if (m && m.id === 'enigma') updateEnigmaStatus();
-    scheduleConvert();
+  $('playMorseBtn').addEventListener('click', async () => {
+    const morseText = (currentDirection === 'encode' ? outputText.value : inputText.value);
+    if (!morseText) return;
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+    isPlayingAudio = true;
+    audioStopFlag = false;
+    $('playMorseBtn').disabled = true;
+    $('stopMorseBtn').disabled = false;
+
+    const wpm = parseInt($('morseWpm').value, 10) || 18;
+    const dotTime = 1.2 / wpm;
+
+    for (const char of morseText) {
+      if (audioStopFlag) break;
+      if (char === '.') await playTone(dotTime, 700);
+      else if (char === '-') await playTone(dotTime * 3, 700);
+      else if (char === ' ') await waitDelay(dotTime * 3);
+      else if (char === '/') await waitDelay(dotTime * 7);
+      await waitDelay(dotTime);
+    }
+
+    $('playMorseBtn').disabled = false;
+    $('stopMorseBtn').disabled = true;
+    isPlayingAudio = false;
   });
 
-  dirToggle.addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    direction = btn.dataset.dir;
-    dirToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
-    statDirection.textContent = direction === 'encode' ? 'ENCODE' : 'DECODE';
-    scheduleConvert();
-  });
+  $('stopMorseBtn').addEventListener('click', () => { audioStopFlag = true; });
 
-  ['enigmaRotor1','enigmaRotor2','enigmaRotor3','enigmaReflector',
-   'enigmaPos1','enigmaPos2','enigmaPos3','enigmaRing1','enigmaRing2','enigmaRing3','enigmaPlugboard']
-    .forEach(id => {
-      $(id).addEventListener('input', () => {
-        const m = currentMethod();
-        if (m && m.id === 'enigma') { updateEnigmaStatus(); scheduleConvert(); }
-      });
-      $(id).addEventListener('change', () => {
-        const m = currentMethod();
-        if (m && m.id === 'enigma') { updateEnigmaStatus(); scheduleConvert(); }
-      });
+  function playTone(duration, freq) {
+    return new Promise(resolve => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+      setTimeout(resolve, duration * 1000);
     });
+  }
 
-  clearBtn.addEventListener('click', () => {
-    inputText.value = '';
-    outputText.value = '';
-    updateMeta();
-    setStatus('Geleert.', '');
-    inputText.focus();
-  });
+  function waitDelay(duration) {
+    return new Promise(resolve => setTimeout(resolve, duration * 1000));
+  }
 
-  copyInputBtn.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(inputText.value); setStatus('Eingabe kopiert.', 'ok'); }
-    catch { setStatus('Kopieren fehlgeschlagen.', 'error'); }
-  });
+  // ═══════════════════════════════════════════════════════
+  //  KRYPTO-ANALYSE & BRUTE-FORCE TOOLS
+  // ═══════════════════════════════════════════════════════
+  const GERMAN_FREQ = {
+    E:17.4, N:9.8, I:7.6, S:7.3, R:7.0, A:6.5, T:6.1, D:5.1, H:4.8, U:4.4,
+    L:3.4, C:3.1, G:3.0, M:2.5, O:2.5, B:1.9, W:1.9, F:1.7, K:1.2, Z:1.1,
+    P:0.8, V:0.7, J:0.3, Y:0.04, X:0.03, Q:0.02
+  };
 
-  pasteBtn.addEventListener('click', async () => {
-    try {
-      const t = await navigator.clipboard.readText();
-      inputText.value = t;
-      updateMeta();
-      convert();
-      setStatus('Eingefügt.', 'ok');
-    } catch { setStatus('Zwischenablage nicht verfügbar.', 'error'); }
-  });
+  function updateAnalysisTools() {
+    const text = inputText.value;
+    updateMagicDetector(text);
+    updateFrequencyBars(text);
+    updateCaesarBrute(text);
+  }
 
-  copyOutputBtn.addEventListener('click', async () => {
-    if (!outputText.value) { setStatus('Nichts zu kopieren.', 'error'); return; }
-    try { await navigator.clipboard.writeText(outputText.value); setStatus('Ergebnis kopiert.', 'ok'); }
-    catch { setStatus('Kopieren fehlgeschlagen.', 'error'); }
-  });
+  function updateMagicDetector(text) {
+    const list = $('detectorResults');
+    list.innerHTML = '';
+    const trimmed = text.trim();
+    if (!trimmed) {
+      list.innerHTML = '<div style="color:var(--text-mute);">Keine Daten zur Inspektion vorhanden.</div>';
+      return;
+    }
 
-  swapBtn.addEventListener('click', () => {
-    if (!outputText.value) { setStatus('Kein Ergebnis.', 'error'); return; }
-    inputText.value = outputText.value;
-    outputText.value = '';
-    direction = direction === 'encode' ? 'decode' : 'encode';
-    dirToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.dir === direction));
-    statDirection.textContent = direction === 'encode' ? 'ENCODE' : 'DECODE';
-    updateMeta();
-    convert();
-    setStatus('Ergebnis als Eingabe übernommen.', 'ok');
-  });
+    const detections = [];
+    if (/^[01\s]+$/.test(trimmed) && trimmed.replace(/\s/g,'').length >= 8) detections.push({ name:'Binärdaten (Base 2)', conf:'Sehr hoch' });
+    if (/^[0-9a-fA-F\s]+$/.test(trimmed) && trimmed.length >= 4) detections.push({ name:'Hexadezimal (Base 16)', conf:'Hoch' });
+    if (/^[A-Za-z0-9+/]+={0,2}$/.test(trimmed) && trimmed.length % 4 === 0) detections.push({ name:'Base64 (Standard)', conf:'Sehr hoch' });
+    if (/^[.\-/\s·•–—]+$/.test(trimmed)) detections.push({ name:'Morsecode', conf:'Extrem hoch' });
+    if (/^[1-5\s]+$/.test(trimmed)) detections.push({ name:'Polybius-Koordinaten', conf:'Mittel' });
+    if (/^[ab\s]+$/i.test(trimmed) && trimmed.length >= 5) detections.push({ name:'Bacon-Chiffre', conf:'Hoch' });
 
-  document.addEventListener('click', (e) => {
-    const header = e.target.closest('#infoHeader');
-    if (!header) return;
-    infoBox.classList.toggle('collapsed');
-  });
+    if (!detections.length) {
+      list.innerHTML = '<div style="color:var(--text-dim);">Keine eindeutige Kodierungssignatur erkannt (wahrscheinlich Klartext oder Chiffre).</div>';
+    } else {
+      detections.forEach(d => {
+        const item = document.createElement('div');
+        item.style.cssText = 'padding:0.4rem; background:var(--bg); border:1px solid var(--border); border-radius:3px; font-size:0.76rem; display:flex; justify-content:space-between;';
+        item.innerHTML = `<span>▶ <b>${d.name}</b></span> <span style="color:var(--green);">${d.conf}</span>`;
+        list.appendChild(item);
+      });
+    }
+  }
 
-  // ═══════════════════════════════════════════════
-  //  INIT
-  // ═══════════════════════════════════════════════
-  // Kein Verfahren vorausgewählt — der Nutzer muss selbst wählen.
-  methodSel.value = '';
-  updateParamField();  // Blendet Enigma + Parameterfeld aus
-  updateInfo();        // Zeigt Hinweistext
-  updateEnigmaStatus();
-  statDirection.textContent = 'ENCODE';
+  function updateFrequencyBars(text) {
+    const container = $('freqBars');
+    container.innerHTML = '';
+    const letters = text.toUpperCase().replace(/[^A-Z]/g,'');
+    const total = letters.length;
+    const counts = {};
+    for (const c of ALPHABET) counts[c] = 0;
+    for (const c of letters) counts[c]++;
+
+    ALPHABET.split('').sort((a,b) => (counts[b] - counts[a]) || (GERMAN_FREQ[b] - GERMAN_FREQ[a])).forEach(c => {
+      const pct = total ? ((counts[c] / total) * 100).toFixed(1) : 0;
+      const row = document.createElement('div');
+      row.className = 'freq-row';
+      row.innerHTML = `
+        <span class="freq-char">${c}</span>
+        <div class="freq-track">
+          <div class="freq-fill-actual" style="width:${Math.min(pct * 3.5, 100)}%;"></div>
+        </div>
+        <span class="freq-val">${pct}% <span style="color:var(--text-mute);">(${GERMAN_FREQ[c]}%)</span></span>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function updateCaesarBrute(text) {
+    const tbody = $('caesarBruteBody');
+    tbody.innerHTML = '';
+    if (!text.trim()) {
+      tbody.innerHTML = '<tr><td colspan="2" style="color:var(--text-mute);">Kein Text vorhanden.</td></tr>';
+      return;
+    }
+    const sample = text.slice(0, 80);
+    for (let shift = 1; shift <= 25; shift++) {
+      const dec = caesarCipher(sample, 26 - shift);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td><b>ROT-${shift}</b></td><td>${escapeHtml(dec)}</td>`;
+      tr.addEventListener('click', () => {
+        methodSelect.value = 'caesar';
+        paramInput.value = shift;
+        currentDirection = 'decode';
+        updateControlUI();
+        $('dirSwitch').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.dir === 'decode'));
+        document.querySelector('[data-view="workspace"]').click();
+        scheduleConvert();
+      });
+      tbody.appendChild(tr);
+    }
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  HASH LABOR (MD5, SHA-1, SHA-256, SHA-512)
+  // ═══════════════════════════════════════════════════════
+  async function updateHashes() {
+    const text = inputText.value;
+    if (!text) {
+      $('hashMd5').textContent = '—'; $('hashSha1').textContent = '—';
+      $('hashSha256').textContent = '—'; $('hashSha512').textContent = '—';
+      return;
+    }
+    const bytes = new TextEncoder().encode(text);
+    $('hashMd5').textContent = md5(text);
+    $('hashSha1').textContent = await digestHex('SHA-1', bytes);
+    $('hashSha256').textContent = await digestHex('SHA-256', bytes);
+    $('hashSha512').textContent = await digestHex('SHA-512', bytes);
+  }
+
+  async function digestHex(algo, bytes) {
+    const buf = await crypto.subtle.digest(algo, bytes);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // Native Pure JS MD5 Implementation
+  function md5(string) {
+    function rotateLeft(lValue, iShiftBits) {
+      return (lValue << iShiftBits) | (lValue >>> (32 - iShiftBits));
+    }
+    function addUnsigned(lX, lY) {
+      const lX8 = (lX & 0x80000000), lY8 = (lY & 0x80000000);
+      const lX4 = (lX & 0x40000000), lY4 = (lY & 0x40000000);
+      const lResult = (lX & 0x3FFFFFFF) + (lY & 0x3FFFFFFF);
+      if (lX4 & lY4) return (lResult ^ 0x80000000 ^ lX8 ^ lY8);
+      if (lX4 | lY4) {
+        if (lResult & 0x40000000) return (lResult ^ 0xC0000000 ^ lX8 ^ lY8);
+        else return (lResult ^ 0x40000000 ^ lX8 ^ lY8);
+      } else return (lResult ^ lX8 ^ lY8);
+    }
+    function F(x, y, z) { return (x & y) | ((~x) & z); }
+    function G(x, y, z) { return (x & z) | (y & (~z)); }
+    function H(x, y, z) { return (x ^ y ^ z); }
+    function I(x, y, z) { return (y ^ (x | (~z))); }
+    function FF(a, b, c, d, x, s, ac) {
+      a = addUnsigned(a, addUnsigned(addUnsigned(F(b, c, d), x), ac));
+      return addUnsigned(rotateLeft(a, s), b);
+    }
+    function GG(a, b, c, d, x, s, ac) {
+      a = addUnsigned(a, addUnsigned(addUnsigned(G(b, c, d), x), ac));
+      return addUnsigned(rotateLeft(a, s), b);
+    }
+    function HH(a, b, c, d, x, s, ac) {
+      a = addUnsigned(a, addUnsigned(addUnsigned(H(b, c, d), x), ac));
+      return addUnsigned(rotateLeft(a, s), b);
+    }
+    function II(a, b, c, d, x, s, ac) {
+      a = addUnsigned(a, addUnsigned(addUnsigned(I(b, c, d), x), ac));
+      return addUnsigned(rotateLeft(a, s), b);
+    }
+
+    let x = [];
+    const kLength = string.length;
+    for (let i = 0; i < kLength; i++) x[i >> 2] |= (string.charCodeAt(i) & 0xFF) << ((i % 4) * 8);
+    x[kLength >> 2] |= 0x80 << ((kLength % 4) * 8);
+    x[(((kLength + 8) >> 6) * 16) + 14] = kLength * 8;
+
+    let a = 0x67452301, b = 0xEFCDAB89, c = 0x98BADCFE, d = 0x10325476;
+    for (let i = 0; i < x.length; i += 16) {
+      let olda = a, oldb = b, oldc = c, oldd = d;
+      a = FF(a, b, c, d, x[i+0], 7, 0xD76AA478); d = FF(d, a, b, c, x[i+1], 12, 0xE8C7B756);
+      c = FF(c, d, a, b, x[i+2], 17, 0x242070DB); b = FF(b, c, d, a, x[i+3], 22, 0xC1BDCEEE);
+      a = FF(a, b, c, d, x[i+4], 7, 0xF57C0FAF); d = FF(d, a, b, c, x[i+5], 12, 0x4787C62A);
+      c = FF(c, d, a, b, x[i+6], 17, 0xA8304613); b = FF(b, c, d, a, x[i+7], 22, 0xFD469501);
+      a = FF(a, b, c, d, x[i+8], 7, 0x698098D8); d = FF(d, a, b, c, x[i+9], 12, 0x8B44F7AF);
+      c = FF(c, d, a, b, x[i+10], 17, 0xFFFF5BB1); b = FF(b, c, d, a, x[i+11], 22, 0x895CD7BE);
+      a = FF(a, b, c, d, x[i+12], 7, 0x6B901122); d = FF(d, a, b, c, x[i+13], 12, 0xFD987193);
+      c = FF(c, d, a, b, x[i+14], 17, 0xA679438E); b = FF(b, c, d, a, x[i+15], 22, 0x49B40821);
+
+      a = GG(a, b, c, d, x[i+1], 5, 0xF61E2562); d = GG(d, a, b, c, x[i+6], 9, 0xC040B340);
+      c = GG(c, d, a, b, x[i+11], 14, 0x265E5A51); b = GG(b, c, d, a, x[i+0], 20, 0xE9B6C7AA);
+      a = GG(a, b, c, d, x[i+5], 5, 0xD62F105D); d = GG(d, a, b, c, x[i+10], 9, 0x02441453);
+      c = GG(c, d, a, b, x[i+15], 14, 0xD8A1E681); b = GG(b, c, d, a, x[i+4], 20, 0xE7D3FBC8);
+      a = GG(a, b, c, d, x[i+9], 5, 0x21E1CDE6); d = GG(d, a, b, c, x[i+14], 9, 0xC33707D6);
+      c = GG(c, d, a, b, x[i+3], 14, 0xF4D50D87); b = GG(b, c, d, a, x[i+8], 20, 0x455A14ED);
+      a = GG(a, b, c, d, x[i+13], 5, 0xA9E3E905); d = GG(d, a, b, c, x[i+2], 9, 0xFCEFA3F8);
+      c = GG(c, d, a, b, x[i+7], 14, 0x676F02D9); b = GG(b, c, d, a, x[i+12], 20, 0x8D2A4C8A);
+
+      a = HH(a, b, c, d, x[i+5], 4, 0xFFFA3942); d = HH(d, a, b, c, x[i+8], 11, 0x8771F681);
+      c = HH(c, d, a, b, x[i+11], 16, 0x6D9D6122); b = HH(b, c, d, a, x[i+14], 23, 0xFDE5380C);
+      a = HH(a, b, c, d, x[i+1], 4, 0xA4BEEA44); d = HH(d, a, b, c, x[i+4], 11, 0x4BDECFA9);
+      c = HH(c, d, a, b, x[i+7], 16, 0xF6BB4B60); b = HH(b, c, d, a, x[i+10], 23, 0xBEBFBC70);
+      a = HH(a, b, c, d, x[i+13], 4, 0x289B7EC6); d = HH(d, a, b, c, x[i+0], 11, 0xEAA127FA);
+      c = HH(c, d, a, b, x[i+3], 16, 0xD4EF3085); b = HH(b, c, d, a, x[i+6], 23, 0x04881D05);
+      a = HH(a, b, c, d, x[i+9], 4, 0xD9D4D039); d = HH(d, a, b, c, x[i+12], 11, 0xE6DB99E5);
+      c = HH(c, d, a, b, x[i+15], 16, 0x1FA27CF8); b = HH(b, c, d, a, x[i+2], 23, 0xC4AC5665);
+
+      a = II(a, b, c, d, x[i+0], 6, 0xF4292244); d = II(d, a, b, c, x[i+7], 10, 0x432AFF97);
+      c = II(c, d, a, b, x[i+14], 15, 0xAB9423A7); b = II(b, c, d, a, x[i+5], 21, 0xFC93A039);
+      a = II(a, b, c, d, x[i+12], 6, 0x655B59C3); d = II(d, a, b, c, x[i+3], 10, 0x8F0CCC92);
+      c = II(c, d, a, b, x[i+10], 15, 0xFFEFF47D); b = II(b, c, d, a, x[i+1], 21, 0x85845DD1);
+      a = II(a, b, c, d, x[i+8], 6, 0x6FA87E4F); d = II(d, a, b, c, x[i+15], 10, 0xFE2CE6E0);
+      c = II(c, d, a, b, x[i+6], 15, 0xA3014314); b = II(b, c, d, a, x[i+13], 21, 0x4E0811A1);
+      a = II(a, b, c, d, x[i+4], 6, 0xF7537E82); d = II(d, a, b, c, x[i+11], 10, 0xBD3AF235);
+      c = II(c, d, a, b, x[i+2], 15, 0x2AD7D2BB); b = II(b, c, d, a, x[i+9], 21, 0xEB86D391);
+
+      a = addUnsigned(a, olda); b = addUnsigned(b, oldb); c = addUnsigned(c, oldc); d = addUnsigned(d, oldd);
+    }
+    return [a, b, c, d].map(val => {
+      let hex = '';
+      for (let i = 0; i < 4; i++) hex += ((val >>> (i * 8)) & 0xFF).toString(16).padStart(2, '0');
+      return hex;
+    }).join('');
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  INITIALISIERUNG
+  // ═══════════════════════════════════════════════════════
+  methodSelect.value = '';
+  updateControlUI();
   updateMeta();
-  // convert() wird NICHT aufgerufen – sonst würde ein leerer Output erzeugt
   inputText.focus();
+
 })();
 </script>
 </body>
